@@ -77,6 +77,10 @@ LANGUAGE_LABELS = {
         "now": "AGORA",
         "days": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
     },
+    "zh-tw": {
+        "now": "現在",
+        "days": ["週一", "週二", "週三", "週四", "週五", "週六", "週日"],
+    },
 }
 
 # month names for a handful of supported languages; keep capitalized first letter
@@ -193,7 +197,28 @@ MONTH_NAMES = {
         "November",
         "Desember",
     ],
+    "zh-tw": [
+        "1月",
+        "2月",
+        "3月",
+        "4月",
+        "5月",
+        "6月",
+        "7月",
+        "8月",
+        "9月",
+        "10月",
+        "11月",
+        "12月",
+    ],
 }
+
+
+def normalize_language_key(language):
+    lang = (language or "").strip().lower().replace("_", "-")
+    if lang in ("zh", "zh-tw", "zh-hant", "zh-hant-tw", "zh-tw-hant"):
+        return "zh-tw"
+    return lang.split("-")[0]
 
 
 def format_localized_date(language, dt):
@@ -204,9 +229,7 @@ def format_localized_date(language, dt):
       pt -> "25 de março de 2026"
       fr/de/it/nl/es/id -> "25 mars 2026"
     """
-    lang = (language or "").lower()
-    # Support full locale codes like en-US or de-DE by normalizing to the short prefix
-    short = lang.split("-")[0].split("_")[0]
+    short = normalize_language_key(language)
     months = MONTH_NAMES.get(short, MONTH_NAMES.get("en"))
     raw_month = months[dt.month - 1]
 
@@ -237,21 +260,34 @@ def format_localized_date(language, dt):
         # Portuguese: Day de month de Year -> 25 de março de 2026
         return f"{day} de {month} de {year}"
 
+    if short == "zh-tw":
+        # Traditional Chinese: 2026年3月25日
+        return f"{year}年{month}{day}日"
+
     # Fallback: use English-style month-first formatting
     return f"{month} {day}, {year}"
 
 
 def get_language_labels(language):
-    lang = (language or "").lower()
+    lang = (language or "").strip().lower().replace("_", "-")
     # exact key
     if lang in LANGUAGE_LABELS:
         return LANGUAGE_LABELS[lang]
     # try prefix like en-US -> en
-    short = lang.split("-")[0].split("_")[0]
+    short = normalize_language_key(language)
     if short in LANGUAGE_LABELS:
         return LANGUAGE_LABELS[short]
     # fallback to English
     return LANGUAGE_LABELS["en"]
+
+
+def get_accept_language_header(language):
+    normalized = normalize_language_key(language)
+    if normalized == "zh-tw":
+        return "zh-TW,zh-Hant;q=0.9,zh;q=0.8,en;q=0.5"
+    if normalized in LANGUAGE_LABELS:
+        return f"{normalized};q=1.0,en;q=0.5"
+    return "en;q=1.0"
 
 
 def is_valid_title(value):
@@ -278,7 +314,8 @@ def is_supported_title(value):
             continue
 
         has_letter = True
-        if "LATIN" not in unicodedata.name(char, ""):
+        char_name = unicodedata.name(char, "")
+        if "LATIN" not in char_name and "CJK" not in char_name and "BOPOMOFO" not in char_name:
             return False
 
     return has_letter
@@ -337,7 +374,7 @@ class MiniWeather(Weather):
             logger.error("%s request failed: %s", weather_provider, exc)
             raise RuntimeError(f"{weather_provider} request failure, please check logs.") from exc
 
-        title = self._resolve_title_with_fallback(settings, weather_provider, lat, long, api_key)
+        title = self._resolve_title_with_fallback(settings, weather_provider, lat, long, api_key, language)
 
         forecast = template_params.get("forecast", [])
         if not forecast:
@@ -372,6 +409,7 @@ class MiniWeather(Weather):
         template_params.update(
             {
                 "title": title,
+                "language": normalize_language_key(language),
                 "current_label": labels["now"],
                 "date": localized_date,
                 "current_high": current_day["high"],
@@ -461,7 +499,7 @@ class MiniWeather(Weather):
 
         raise RuntimeError(f"Unknown weather provider: {weather_provider}")
 
-    def _resolve_title(self, settings, weather_provider, lat, long, api_key):
+    def _resolve_title(self, settings, weather_provider, lat, long, api_key, language):
         title_selection = settings.get("titleSelection", "location")
         custom_title = (settings.get("customTitle") or "").strip()
 
@@ -473,11 +511,11 @@ class MiniWeather(Weather):
         if weather_provider == "OpenWeatherMap":
             return self.get_location(api_key, lat, long)
 
-        return self.get_reverse_geocoded_location(lat, long)
+        return self.get_reverse_geocoded_location(lat, long, language)
 
-    def _resolve_title_with_fallback(self, settings, weather_provider, lat, long, api_key):
+    def _resolve_title_with_fallback(self, settings, weather_provider, lat, long, api_key, language):
         try:
-            title = self._resolve_title(settings, weather_provider, lat, long, api_key)
+            title = self._resolve_title(settings, weather_provider, lat, long, api_key, language)
             if is_supported_title(title):
                 return title
         except Exception as exc:
@@ -508,9 +546,13 @@ class MiniWeather(Weather):
         logger.info("Using timezone from Open-Meteo data: %s", timezone_name)
         return pytz.timezone(timezone_name)
 
-    def get_reverse_geocoded_location(self, lat, long):
+    def get_reverse_geocoded_location(self, lat, long, language="en"):
         # Use rounded coordinates as cache key to avoid tiny float differences
-        key = (round(float(lat), REVERSE_GEOCODE_ROUND_DECIMALS), round(float(long), REVERSE_GEOCODE_ROUND_DECIMALS))
+        key = (
+            round(float(lat), REVERSE_GEOCODE_ROUND_DECIMALS),
+            round(float(long), REVERSE_GEOCODE_ROUND_DECIMALS),
+            normalize_language_key(language),
+        )
 
         now_ts = datetime.datetime.now().timestamp()
         cached = REVERSE_GEOCODE_CACHE.get(key)
@@ -522,7 +564,10 @@ class MiniWeather(Weather):
                 # recent failure — avoid retrying too quickly
                 return self.format_coordinates(lat, long)
 
-        headers = {"User-Agent": "InkyPi Mini Weather/1.0 (+https://github.com/inkypi)"}
+        headers = {
+            "User-Agent": "InkyPi Mini Weather/1.0 (+https://github.com/inkypi)",
+            "Accept-Language": get_accept_language_header(language),
+        }
         try:
             response = requests.get(
                 REVERSE_GEOCODE_URL.format(lat=lat, long=long),

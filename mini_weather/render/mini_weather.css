@@ -12,7 +12,7 @@
   justify-content: center;
   gap: 0.8dvh;
   padding: 0dvh 0.5dvw;
-  font-family: "Jost";
+  font-family: "Jost", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
 
 .mini-weather-title {
@@ -410,6 +410,6 @@
 
 @media (max-width: 250px) {
   .mini-weather-shell {
-    font-family: "Dogica";
+    font-family: "Dogica", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   }
 }
