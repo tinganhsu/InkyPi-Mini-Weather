@@ -8,6 +8,13 @@ import datetime
 
 from plugins.weather.weather import UNITS, Weather
 
+try:
+    # Package-relative import when loaded as plugins.mini_weather.mini_weather
+    from .cwa_client import fetch_and_build_template_params
+except ImportError:
+    # Fallback for flat plugin layout used by some installers
+    from cwa_client import fetch_and_build_template_params  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 REVERSE_GEOCODE_URL = (
@@ -329,31 +336,14 @@ def is_supported_title(value):
 class MiniWeather(Weather):
     def generate_settings_template(self):
         template_params = super().generate_settings_template()
+        # Required for OpenWeatherMap and CWA; Open-Meteo needs none (UI hides the badge).
         template_params['api_key'] = {
             "required": True,
-            "service": "OpenWeatherMap",
-            "expected_key": "OPEN_WEATHER_MAP_SECRET"
+            "service": "OpenWeatherMap / CWA",
+            "expected_key": "OPEN_WEATHER_MAP_SECRET or CWA_API_KEY"
         }
         return template_params
     def generate_image(self, settings, device_config):
-        lat_value = settings.get("latitude")
-        long_value = settings.get("longitude")
-        if lat_value in (None, "") or long_value in (None, ""):
-            raise RuntimeError("Latitude and Longitude are required.")
-
-        # Validate and parse numeric coordinates with clear error messages.
-        try:
-            lat = float(str(lat_value).strip())
-            long = float(str(long_value).strip())
-        except (ValueError, TypeError):
-            raise RuntimeError("Latitude and Longitude must be valid numeric values.")
-
-        # Range checks: latitude [-90, 90], longitude [-180, 180]
-        if not (-90.0 <= lat <= 90.0):
-            raise RuntimeError("Latitude must be between -90 and 90.")
-        if not (-180.0 <= long <= 180.0):
-            raise RuntimeError("Longitude must be between -180 and 180.")
-
         units = settings.get("units")
         if units not in UNITS:
             raise RuntimeError("Units are required.")
@@ -363,6 +353,35 @@ class MiniWeather(Weather):
         timezone_name = device_config.get_config("timezone", default="America/New_York")
         time_format = device_config.get_config("time_format", default="12h")
         local_tz = pytz.timezone(timezone_name)
+
+        lat = None
+        long = None
+        if weather_provider == "CWA":
+            cwa_location = (settings.get("cwaLocation") or settings.get("cwaDistrict") or "").strip()
+            cwa_city = (settings.get("cwaCity") or "").strip()
+            if not cwa_location or not cwa_city:
+                raise RuntimeError("CWA city and district are required.")
+            # CWA is Taiwan-only; coordinates are unused for the forecast request.
+            lat = 23.9739
+            long = 120.9820
+        else:
+            lat_value = settings.get("latitude")
+            long_value = settings.get("longitude")
+            if lat_value in (None, "") or long_value in (None, ""):
+                raise RuntimeError("Latitude and Longitude are required.")
+
+            # Validate and parse numeric coordinates with clear error messages.
+            try:
+                lat = float(str(lat_value).strip())
+                long = float(str(long_value).strip())
+            except (ValueError, TypeError):
+                raise RuntimeError("Latitude and Longitude must be valid numeric values.")
+
+            # Range checks: latitude [-90, 90], longitude [-180, 180]
+            if not (-90.0 <= lat <= 90.0):
+                raise RuntimeError("Latitude must be between -90 and 90.")
+            if not (-180.0 <= long <= 180.0):
+                raise RuntimeError("Longitude must be between -180 and 180.")
 
         try:
             template_params, provider_tz, api_key = self._get_template_params(
@@ -502,6 +521,36 @@ class MiniWeather(Weather):
             template_params = self.parse_open_meteo_data(weather_data, aqi_data, tz, units, time_format, lat)
             return template_params, tz, api_key
 
+        if weather_provider == "CWA":
+            api_key = device_config.load_env_key("CWA_API_KEY")
+            if not api_key:
+                raise RuntimeError("CWA API Key not configured (set CWA_API_KEY).")
+
+            cwa_location = (settings.get("cwaLocation") or settings.get("cwaDistrict") or "").strip()
+            cwa_dataset = (settings.get("cwaDataset") or "").strip()
+            if not cwa_location:
+                raise RuntimeError("CWA location is required.")
+            if not cwa_dataset:
+                raise RuntimeError("CWA dataset is required.")
+
+            # CWA forecast times are Taiwan local; always render in Asia/Taipei.
+            tz = pytz.timezone("Asia/Taipei")
+
+            def _icon_path(icon_stem: str) -> str:
+                return self.get_plugin_dir(f"icons/{icon_stem}.png")
+
+            template_params = fetch_and_build_template_params(
+                api_key=api_key,
+                base_dataset=cwa_dataset,
+                location_name=cwa_location,
+                units=units,
+                time_format=time_format,
+                icon_path_fn=_icon_path,
+            )
+            # Parent Weather uses temperature_unit from UNITS; keep consistent.
+            template_params["temperature_unit"] = UNITS[units]["temperature"]
+            return template_params, tz, api_key
+
         raise RuntimeError(f"Unknown weather provider: {weather_provider}")
 
     def _resolve_title(self, settings, weather_provider, lat, long, api_key, language):
@@ -512,6 +561,19 @@ class MiniWeather(Weather):
             if not custom_title:
                 raise RuntimeError("Custom title is required.")
             return custom_title
+
+        if weather_provider == "CWA":
+            cwa_city = (settings.get("cwaCity") or "").strip()
+            cwa_location = (settings.get("cwaLocation") or settings.get("cwaDistrict") or "").strip()
+            if cwa_location:
+                # Prefer the selected township name; it may already include the city
+                # (e.g. 臺北市中正區) for disambiguation in CWA's location list.
+                if cwa_city and cwa_city not in cwa_location:
+                    return f"{cwa_city}{cwa_location}"
+                return cwa_location
+            if cwa_city:
+                return cwa_city
+            raise RuntimeError("CWA location is required.")
 
         if weather_provider == "OpenWeatherMap":
             return self.get_location(api_key, lat, long)

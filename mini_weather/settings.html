@@ -2,6 +2,15 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <div class="form-group">
+    <label for="weatherProvider" class="form-label">Weather Provider:</label>
+    <select id="weatherProvider" name="weatherProvider" class="form-input">
+        <option value="OpenMeteo">Open-Meteo</option>
+        <option value="OpenWeatherMap">OpenWeatherMap</option>
+        <option value="CWA">CWA (中央氣象署)</option>
+    </select>
+</div>
+
+<div class="form-group">
     <label for="language" class="form-label">Language:</label>
     <select id="language" name="language" class="form-input">
         <option value="nl">Dutch</option>
@@ -16,50 +25,67 @@
     </select>
 </div>
 
-<div class="form-group">
-    <label for="quickLocation" class="form-label">Quick Location:</label>
-    <select id="quickLocation" name="quickLocation" class="form-input">
-        <option value="">Select a city...</option>
-        <option value="52.3676,4.9041">Amsterdam</option>
-        <option value="52.5200,13.4050">Berlin</option>
-        <option value="-34.6037,-58.3816">Buenos Aires</option>
-        <option value="-6.2088,106.8456">Jakarta</option>
-        <option value="51.5074,-0.1278">London</option>
-        <option value="40.4168,-3.7038">Madrid</option>
-        <option value="40.7128,-74.0060">New York</option>
-        <option value="48.8566,2.3522">Paris</option>
-        <option value="-22.9068,-43.1729">Rio de Janeiro</option>
-        <option value="41.9028,12.4964">Rome</option>
-        <option value="-23.5505,-46.6333">São Paulo</option>
-        <option value="25.0330,121.5654">Taipei</option>
-        <option value="24.9937,121.3009">Taoyuan</option>
-        <option value="24.1477,120.6736">Taichung</option>
-        <option value="22.9999,120.2270">Tainan</option>
-        <option value="22.6273,120.3014">Kaohsiung</option>
-        <option value="35.6762,139.6503">Tokyo</option>
-    </select>
+<div id="coordLocationSection">
+    <div class="form-group">
+        <label for="quickLocation" class="form-label">Quick Location:</label>
+        <select id="quickLocation" name="quickLocation" class="form-input">
+            <option value="">Select a city...</option>
+            <option value="52.3676,4.9041">Amsterdam</option>
+            <option value="52.5200,13.4050">Berlin</option>
+            <option value="-34.6037,-58.3816">Buenos Aires</option>
+            <option value="-6.2088,106.8456">Jakarta</option>
+            <option value="51.5074,-0.1278">London</option>
+            <option value="40.4168,-3.7038">Madrid</option>
+            <option value="40.7128,-74.0060">New York</option>
+            <option value="48.8566,2.3522">Paris</option>
+            <option value="-22.9068,-43.1729">Rio de Janeiro</option>
+            <option value="41.9028,12.4964">Rome</option>
+            <option value="-23.5505,-46.6333">São Paulo</option>
+            <option value="25.0330,121.5654">Taipei</option>
+            <option value="24.9937,121.3009">Taoyuan</option>
+            <option value="24.1477,120.6736">Taichung</option>
+            <option value="22.9999,120.2270">Tainan</option>
+            <option value="22.6273,120.3014">Kaohsiung</option>
+            <option value="35.6762,139.6503">Tokyo</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Location: </label>
+        <div class="form-group">
+            <span>Latitude </span>
+            <input type="text" id="latitude" name="latitude" class="form-input" />
+        </div>
+        <div class="form-group">
+            <span>Longitude </span>
+            <input type="text" id="longitude" name="longitude" class="form-input" />
+        </div>
+        <button type="button" id="openMap" class="action-button compact">Select Location</button>
+    </div>
+</div>
+
+<div id="cwaLocationSection" style="display: none;">
+    <div class="form-group">
+        <label for="cwaCity" class="form-label">CWA 縣市:</label>
+        <select id="cwaCity" name="cwaCity" class="form-input">
+            <option value="">選擇縣市...</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="cwaDistrict" class="form-label">CWA 鄉鎮市區:</label>
+        <select id="cwaDistrict" name="cwaDistrict" class="form-input">
+            <option value="">先選擇縣市...</option>
+        </select>
+    </div>
+    <input type="hidden" id="cwaLocation" name="cwaLocation" value="" />
+    <input type="hidden" id="cwaDataset" name="cwaDataset" value="" />
+    <p class="form-hint" style="margin-top: 0.25rem; opacity: 0.8; font-size: 0.9em;">
+        地點清單依中央氣象署開放資料鄉鎮市區命名（Opendata City）。
+        部分重名行政區會附上縣市名（例如「臺北市中正區」）。
+    </p>
 </div>
 
 <div class="form-group">
-    <label class="form-label">Location: </label>
-    <div class="form-group">
-        <span>Latitude </span>
-        <input type="text" id="latitude" name="latitude" class="form-input" />
-    </div>
-    <div class="form-group">
-        <span>Longitude </span>
-        <input type="text" id="longitude" name="longitude" class="form-input" />
-    </div>
-    <button type="button" id="openMap" class="action-button compact">Select Location</button>
-</div>
-
-<div class="form-group">
-    <label for="weatherProvider" class="form-label">Weather Provider:</label>
-    <select id="weatherProvider" name="weatherProvider" class="form-input">
-        <option value="OpenMeteo">Open-Meteo</option>
-        <option value="OpenWeatherMap">OpenWeatherMap</option>
-    </select>
-
     <label for="units" class="form-label">Units:</label>
     <select id="units" name="units" class="form-input">
         <option value="imperial">Imperial (°F)</option>
@@ -104,7 +130,7 @@
     </div>
 </div>
 
-<div class="form-group">
+<div class="form-group" id="weatherTimeZoneSection">
     <label for="weatherTimeZone" class="form-label">Time Zone:</label>
     <select id="weatherTimeZone" name="weatherTimeZone" class="form-input">
         <option value="locationTimeZone">Use Location Time Zone</option>
@@ -123,12 +149,118 @@
 </div>
 
 <script>
+    const CWA_LOCATIONS = [{"city": "宜蘭縣", "dataset": "F-D0047-001", "places": ["頭城鎮", "礁溪鄉", "壯圍鄉", "員山鄉", "宜蘭市", "大同鄉", "五結鄉", "三星鄉", "羅東鎮", "冬山鄉", "南澳鄉", "蘇澳鎮"]}, {"city": "花蓮縣", "dataset": "F-D0047-041", "places": ["秀林鄉", "新城鄉", "花蓮市", "吉安鄉", "壽豐鄉", "萬榮鄉", "鳳林鎮", "豐濱鄉", "光復鄉", "卓溪鄉", "瑞穗鄉", "玉里鎮", "富里鄉"]}, {"city": "臺東縣", "dataset": "F-D0047-037", "places": ["長濱鄉", "海端鄉", "池上鄉", "成功鎮", "關山鎮", "東河鄉", "鹿野鄉", "延平鄉", "卑南鄉", "臺東市", "太麻里鄉", "綠島鄉", "達仁鄉", "大武鄉", "蘭嶼鄉", "金峰鄉"]}, {"city": "澎湖縣", "dataset": "F-D0047-045", "places": ["白沙鄉", "西嶼鄉", "湖西鄉", "馬公市", "望安鄉", "七美鄉"]}, {"city": "金門縣", "dataset": "F-D0047-085", "places": ["金城鎮", "金湖鎮", "金沙鎮", "金寧鄉", "烈嶼鄉", "烏坵鄉"]}, {"city": "連江縣", "dataset": "F-D0047-081", "places": ["南竿鄉", "北竿鄉", "莒光鄉", "東引鄉"]}, {"city": "臺北市", "dataset": "F-D0047-061", "places": ["北投區", "士林區", "內湖區", "臺北市中山區", "大同區", "松山區", "南港區", "臺北市中正區", "萬華區", "臺北市信義區", "臺北市大安區", "文山區"]}, {"city": "新北市", "dataset": "F-D0047-069", "places": ["石門區", "三芝區", "金山區", "淡水區", "萬里區", "八里區", "汐止區", "林口區", "五股區", "瑞芳區", "蘆洲區", "雙溪區", "三重區", "貢寮區", "平溪區", "泰山區", "新莊區", "石碇區", "板橋區", "深坑區", "永和區", "樹林區", "中和區", "土城區", "新店區", "坪林區", "鶯歌區", "三峽區", "烏來區"]}, {"city": "桃園市", "dataset": "F-D0047-005", "places": ["大園區", "蘆竹區", "觀音區", "龜山區", "桃園區", "中壢區", "新屋區", "八德區", "平鎮區", "楊梅區", "大溪區", "龍潭區", "復興區"]}, {"city": "臺中市", "dataset": "F-D0047-073", "places": ["北屯區", "西屯區", "臺中市北區", "南屯區", "臺中市西區", "臺中市東區", "中區", "臺中市南區", "和平區", "大甲區", "臺中市大安區", "外埔區", "后里區", "清水區", "東勢區", "神岡區", "龍井區", "石岡區", "豐原區", "梧棲區", "新社區", "沙鹿區", "大雅區", "潭子區", "大肚區", "太平區", "烏日區", "大里區", "霧峰區"]}, {"city": "臺南市", "dataset": "F-D0047-077", "places": ["安南區", "中西區", "安平區", "臺南市東區", "臺南市南區", "臺南市北區", "白河區", "後壁區", "鹽水區", "新營區", "東山區", "北門區", "柳營區", "學甲區", "下營區", "六甲區", "南化區", "將軍區", "楠西區", "麻豆區", "官田區", "佳里區", "大內區", "七股區", "玉井區", "善化區", "西港區", "山上區", "安定區", "新市區", "左鎮區", "新化區", "永康區", "歸仁區", "關廟區", "龍崎區", "仁德區"]}, {"city": "高雄市", "dataset": "F-D0047-065", "places": ["楠梓區", "左營區", "三民區", "鼓山區", "苓雅區", "新興區", "前金區", "鹽埕區", "前鎮區", "旗津區", "小港區", "那瑪夏區", "甲仙區", "六龜區", "杉林區", "內門區", "茂林區", "美濃區", "旗山區", "田寮區", "湖內區", "茄萣區", "阿蓮區", "路竹區", "永安區", "岡山區", "燕巢區", "彌陀區", "橋頭區", "大樹區", "梓官區", "大社區", "仁武區", "鳥松區", "大寮區", "鳳山區", "林園區", "桃源區"]}, {"city": "基隆市", "dataset": "F-D0047-049", "places": ["安樂區", "基隆市中山區", "基隆市中正區", "七堵區", "基隆市信義區", "仁愛區", "暖暖區"]}, {"city": "新竹縣", "dataset": "F-D0047-009", "places": ["新豐鄉", "湖口鄉", "新埔鎮", "竹北市", "關西鎮", "芎林鄉", "竹東鎮", "寶山鄉", "尖石鄉", "橫山鄉", "北埔鄉", "峨眉鄉", "五峰鄉"]}, {"city": "新竹市", "dataset": "F-D0047-053", "places": ["新竹市北區", "香山區", "新竹市東區"]}, {"city": "苗栗縣", "dataset": "F-D0047-013", "places": ["竹南鎮", "頭份市", "三灣鄉", "造橋鄉", "後龍鎮", "南庄鄉", "頭屋鄉", "獅潭鄉", "苗栗市", "西湖鄉", "通霄鎮", "公館鄉", "銅鑼鄉", "泰安鄉", "苑裡鎮", "大湖鄉", "三義鄉", "卓蘭鎮"]}, {"city": "彰化縣", "dataset": "F-D0047-017", "places": ["伸港鄉", "和美鎮", "線西鄉", "鹿港鎮", "彰化市", "秀水鄉", "福興鄉", "花壇鄉", "芬園鄉", "芳苑鄉", "埔鹽鄉", "大村鄉", "二林鎮", "員林市", "溪湖鎮", "埔心鄉", "永靖鄉", "社頭鄉", "埤頭鄉", "田尾鄉", "大城鄉", "田中鎮", "北斗鎮", "竹塘鄉", "溪州鄉", "二水鄉"]}, {"city": "南投縣", "dataset": "F-D0047-021", "places": ["仁愛鄉", "國姓鄉", "埔里鎮", "草屯鎮", "中寮鄉", "南投市", "魚池鄉", "水里鄉", "名間鄉", "信義鄉", "集集鎮", "竹山鎮", "鹿谷鄉"]}, {"city": "雲林縣", "dataset": "F-D0047-025", "places": ["麥寮鄉", "二崙鄉", "崙背鄉", "西螺鎮", "莿桐鄉", "林內鄉", "臺西鄉", "土庫鎮", "虎尾鎮", "褒忠鄉", "東勢鄉", "斗南鎮", "四湖鄉", "古坑鄉", "元長鄉", "大埤鄉", "口湖鄉", "北港鎮", "水林鄉", "斗六市"]}, {"city": "嘉義縣", "dataset": "F-D0047-029", "places": ["大林鎮", "溪口鄉", "阿里山鄉", "梅山鄉", "新港鄉", "民雄鄉", "六腳鄉", "竹崎鄉", "東石鄉", "太保市", "番路鄉", "朴子市", "水上鄉", "中埔鄉", "布袋鎮", "鹿草鄉", "義竹鄉", "大埔鄉"]}, {"city": "嘉義市", "dataset": "F-D0047-057", "places": ["嘉義市東區", "嘉義市西區"]}, {"city": "屏東縣", "dataset": "F-D0047-033", "places": ["高樹鄉", "三地門鄉", "霧臺鄉", "里港鄉", "鹽埔鄉", "九如鄉", "長治鄉", "瑪家鄉", "屏東市", "內埔鄉", "麟洛鄉", "泰武鄉", "萬巒鄉", "竹田鄉", "萬丹鄉", "來義鄉", "潮州鎮", "新園鄉", "崁頂鄉", "新埤鄉", "南州鄉", "東港鎮", "林邊鄉", "佳冬鄉", "春日鄉", "獅子鄉", "琉球鄉", "枋山鄉", "牡丹鄉", "滿州鄉", "車城鄉", "恆春鎮", "枋寮鄉"]}];
+
+    function syncCwaLocationFields() {
+        const citySelect = document.getElementById('cwaCity');
+        const districtSelect = document.getElementById('cwaDistrict');
+        const locationInput = document.getElementById('cwaLocation');
+        const datasetInput = document.getElementById('cwaDataset');
+
+        const cityEntry = CWA_LOCATIONS.find((entry) => entry.city === citySelect.value);
+        if (!cityEntry || !districtSelect.value) {
+            locationInput.value = '';
+            datasetInput.value = cityEntry ? cityEntry.dataset : '';
+            return;
+        }
+
+        locationInput.value = districtSelect.value;
+        datasetInput.value = cityEntry.dataset;
+    }
+
+    function populateCwaCities(selectedCity) {
+        const citySelect = document.getElementById('cwaCity');
+        citySelect.innerHTML = '<option value="">選擇縣市...</option>';
+        CWA_LOCATIONS.forEach((entry) => {
+            const option = document.createElement('option');
+            option.value = entry.city;
+            option.textContent = entry.city;
+            citySelect.appendChild(option);
+        });
+        if (selectedCity && CWA_LOCATIONS.some((entry) => entry.city === selectedCity)) {
+            citySelect.value = selectedCity;
+        }
+    }
+
+    function populateCwaDistricts(cityName, selectedDistrict) {
+        const districtSelect = document.getElementById('cwaDistrict');
+        const cityEntry = CWA_LOCATIONS.find((entry) => entry.city === cityName);
+
+        districtSelect.innerHTML = '';
+        if (!cityEntry) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '先選擇縣市...';
+            districtSelect.appendChild(option);
+            syncCwaLocationFields();
+            return;
+        }
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '選擇鄉鎮市區...';
+        districtSelect.appendChild(placeholder);
+
+        cityEntry.places.forEach((place) => {
+            const option = document.createElement('option');
+            option.value = place;
+            option.textContent = place;
+            districtSelect.appendChild(option);
+        });
+
+        if (selectedDistrict && cityEntry.places.includes(selectedDistrict)) {
+            districtSelect.value = selectedDistrict;
+        }
+        syncCwaLocationFields();
+    }
+
     function updateProviderState() {
         const apiKeyLabel = document.querySelector('.api-key-label');
         const provider = document.getElementById('weatherProvider').value;
+        const coordSection = document.getElementById('coordLocationSection');
+        const cwaSection = document.getElementById('cwaLocationSection');
+        const timeZoneSection = document.getElementById('weatherTimeZoneSection');
+        const latitude = document.getElementById('latitude');
+        const longitude = document.getElementById('longitude');
+        const quickLocation = document.getElementById('quickLocation');
+        const cwaCity = document.getElementById('cwaCity');
+        const cwaDistrict = document.getElementById('cwaDistrict');
+        const isCwa = provider === 'CWA';
+
+        if (coordSection) {
+            coordSection.style.display = isCwa ? 'none' : '';
+        }
+        if (cwaSection) {
+            cwaSection.style.display = isCwa ? '' : 'none';
+        }
+        // CWA data is always Asia/Taipei; location timezone option is less useful.
+        if (timeZoneSection) {
+            timeZoneSection.style.display = isCwa ? 'none' : '';
+            if (isCwa) {
+                document.getElementById('weatherTimeZone').value = 'localTimeZone';
+            }
+        }
+
+        // Disable hidden fields so they are not submitted / required for the other mode.
+        if (latitude) latitude.disabled = isCwa;
+        if (longitude) longitude.disabled = isCwa;
+        if (quickLocation) quickLocation.disabled = isCwa;
+        if (cwaCity) cwaCity.disabled = !isCwa;
+        if (cwaDistrict) cwaDistrict.disabled = !isCwa;
+        document.getElementById('cwaLocation').disabled = !isCwa;
+        document.getElementById('cwaDataset').disabled = !isCwa;
 
         if (apiKeyLabel) {
-            apiKeyLabel.style.display = provider === 'OpenMeteo' ? 'none' : '';
+            if (provider === 'OpenMeteo') {
+                apiKeyLabel.style.display = 'none';
+                apiKeyLabel.removeAttribute('title');
+            } else if (provider === 'CWA') {
+                apiKeyLabel.style.display = '';
+                apiKeyLabel.title = 'CWA Opendata (Set CWA_API_KEY in .env)';
+            } else {
+                apiKeyLabel.style.display = '';
+                apiKeyLabel.title = 'OpenWeatherMap (Set OPEN_WEATHER_MAP_SECRET in .env)';
+            }
         }
     }
 
@@ -151,6 +283,8 @@
         const $weatherProvider = document.querySelector('#weatherProvider');
         const $language = document.querySelector('#language');
         const $quickLocation = document.querySelector('#quickLocation');
+        const $cwaCity = document.querySelector('#cwaCity');
+        const $cwaDistrict = document.querySelector('#cwaDistrict');
 
         let latitude = Number($latitude.value) || 0;
         let longitude = Number($longitude.value) || 0;
@@ -160,10 +294,17 @@
         let map;
         let marker;
 
+        populateCwaCities('');
+        populateCwaDistricts('', '');
+
         document.querySelectorAll('input[name="titleSelection"]').forEach((radio) => {
             radio.addEventListener('change', updateCustomTitleState);
         });
         $weatherProvider.addEventListener('change', updateProviderState);
+        $cwaCity.addEventListener('change', () => {
+            populateCwaDistricts($cwaCity.value, '');
+        });
+        $cwaDistrict.addEventListener('change', syncCwaLocationFields);
 
         $openMap.addEventListener('click', () => {
             // Re-read the current latitude/longitude inputs in case the user
@@ -278,6 +419,11 @@
             selectedTitle = pluginSettings.titleSelection || 'location';
             weatherProvider = pluginSettings.weatherProvider || 'OpenMeteo';
             document.getElementById('customTitle').value = pluginSettings.customTitle || '';
+
+            const savedCity = pluginSettings.cwaCity || '';
+            const savedDistrict = pluginSettings.cwaDistrict || pluginSettings.cwaLocation || '';
+            populateCwaCities(savedCity);
+            populateCwaDistricts(savedCity, savedDistrict);
         } else {
             document.getElementById('language').value = 'en';
             document.getElementById('quickLocation').value = '';
@@ -294,5 +440,6 @@
 
         updateProviderState();
         updateCustomTitleState();
+        syncCwaLocationFields();
     });
 </script>
