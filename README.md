@@ -7,7 +7,7 @@ Mini Weather 是 [InkyPi](https://github.com/fatihak/InkyPi) 的輕量天氣外�
 用外掛 ID 與 repository URL 安裝：
 
 ```bash
-inkypi plugin install mini_weather https://github.com/saulob/InkyPi-Mini-Weather
+inkypi plugin install mini_weather https://github.com/tinganhsu/InkyPi-Mini-Weather
 ```
 
 中央氣象署來源在 `mini_weather/cwa_client.py`。要用 CWA，安裝進來的外掛目錄需要包含這個檔案。
