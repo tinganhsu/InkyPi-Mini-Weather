@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+
+  <defs>
+    <pattern id="dotsFine" patternUnits="userSpaceOnUse" width="2" height="2">
+      <circle cx="0.55" cy="0.55" r="0.32" fill="#000" stroke="none"/>
+    </pattern>
+    <pattern id="dotsShadow" patternUnits="userSpaceOnUse" width="2.6" height="2.6">
+      <circle cx="0.45" cy="0.45" r="0.28" fill="#000" stroke="none"/>
+    </pattern>
+    <linearGradient id="lowerShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.20" stop-color="#000"/>
+      <stop offset="0.50" stop-color="#666"/>
+      <stop offset="1.00" stop-color="#fff"/>
+    </linearGradient>
+  </defs>
+
+    <g fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round">
+      <path d="M14 22 C 20 18.5, 26 25.5, 32 22 S 44 18.5, 50 22"/>
+      <path d="M12 32 C 18 28.5, 24 35.5, 32 32 S 46 28.5, 52 32"/>
+      <path d="M14 42 C 20 38.5, 26 45.5, 32 42 S 44 38.5, 50 42"/>
+    </g>
+</svg>

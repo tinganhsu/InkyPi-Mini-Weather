@@ -167,6 +167,10 @@ def _dict_first_scalar(d: dict) -> Any:
         "Temperature",
         "MaxTemperature",
         "MinTemperature",
+        "ApparentTemperature",
+        "MaxApparentTemperature",
+        "MinApparentTemperature",
+        "ProbabilityOfPrecipitation",
         "Weather",
         "WeatherCode",
         "value",
@@ -299,10 +303,75 @@ def _periods_from_location(location: dict) -> list[dict[str, Any]]:
                 period["min_at"] = _extract_temp(time_entry)
             elif name in {"AT", "體感溫度"}:
                 period["at"] = _extract_temp(time_entry)
+            elif name in {"PoP12h", "PoP", "12小時降雨機率", "降雨機率"}:
+                # Weekly F-D0047: PoP12h / 12小時降雨機率 (A0012-001 also lists PoP).
+                period["pop"] = _extract_temp(time_entry)
+            elif name in {"PoP6h", "6小時降雨機率"}:
+                # 3-day product fallback when 12-hour PoP is absent for this period.
+                if period.get("pop") is None:
+                    period["pop"] = _extract_temp(time_entry)
 
     periods = list(by_start.values())
     periods.sort(key=lambda p: p["start"])
     return periods
+
+
+
+def _pick_daily_feels_c(day_periods: list[dict[str, Any]]) -> int | None:
+    """Pick a single representative feels-like temperature (°C) for a calendar day.
+
+    Official F-D0047 element names (CWA 預報因子欄位說明 / F-D0047-001_093.pdf):
+    - AT / 體感溫度 — 3-day 3-hourly product
+    - MaxAT / 最高體感溫度, MinAT / 最低體感溫度 — weekly 12-hour product
+      (the dataset this plugin actually requests)
+
+    Preference: daytime AT, any AT, daytime MaxAT, the day's highest MaxAT,
+    then MinAT. Never fall back to air temperature so a missing AT stays hidden.
+    """
+    if not day_periods:
+        return None
+    daytime = [p for p in day_periods if p.get("start_dt") and p["start_dt"].hour < 18]
+
+    for period in daytime:
+        if period.get("at") is not None:
+            return period["at"]
+    for period in day_periods:
+        if period.get("at") is not None:
+            return period["at"]
+    for period in daytime:
+        if period.get("max_at") is not None:
+            return period["max_at"]
+    max_ats = [p["max_at"] for p in day_periods if p.get("max_at") is not None]
+    if max_ats:
+        return max(max_ats)
+    for period in daytime:
+        if period.get("min_at") is not None:
+            return period["min_at"]
+    min_ats = [p["min_at"] for p in day_periods if p.get("min_at") is not None]
+    if min_ats:
+        return min(min_ats)
+    return None
+
+
+
+def _pick_daily_pop(day_periods: list[dict[str, Any]]) -> int | None:
+    """Pick today's rain probability (0–100) from F-D0047 12-hour PoP.
+
+    Official names: PoP12h / 12小時降雨機率, also PoP / 降雨機率
+    (CWA 預報因子欄位說明 / F-D0047-001_093.pdf). Weekly 12-hour periods
+    often include a daytime and nighttime value; prefer daytime
+    (start hour < 18), then the day's highest PoP. Missing or "-" stays None.
+    """
+    if not day_periods:
+        return None
+    daytime = [p for p in day_periods if p.get("start_dt") and p["start_dt"].hour < 18]
+    for period in daytime:
+        if period.get("pop") is not None:
+            return period["pop"]
+    pops = [p["pop"] for p in day_periods if p.get("pop") is not None]
+    if pops:
+        return max(pops)
+    return None
 
 
 def _aggregate_daily(periods: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -352,9 +421,8 @@ def _aggregate_daily(periods: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "temp_c": temps[0] if temps else int(round((max(highs) + min(lows)) / 2)),
                 "wx_code": wx_source.get("wx_code"),
                 "wx_text": wx_source.get("wx_text") or "",
-                "feels_c": wx_source.get("at")
-                or wx_source.get("max_at")
-                or wx_source.get("min_at"),
+                "feels_c": _pick_daily_feels_c(day_periods),
+                "pop": _pick_daily_pop(day_periods),
             }
         )
     return days
@@ -441,7 +509,8 @@ def build_template_params_from_cwa_days(
     today = days[0]
     current_icon = map_cwa_wx_to_icon(today.get("wx_code"))
     current_temp = convert_temp_c(today.get("temp_c"), units)
-    feels = convert_temp_c(today.get("feels_c") if today.get("feels_c") is not None else today.get("temp_c"), units)
+    # Only expose feels_like when CWA actually sent an AT / MaxAT / MinAT value.
+    feels = convert_temp_c(today.get("feels_c"), units)
 
     forecast = []
     for day in days:
@@ -474,8 +543,9 @@ def build_template_params_from_cwa_days(
         "current_date": today.get("date", ""),
         "current_day_icon": icon_path_fn(current_icon),
         "current_temperature": str(current_temp) if current_temp is not None else "--",
-        "feels_like": str(feels) if feels is not None else "--",
-        "weather_description": today.get("wx_text") or "",
+        "feels_like": str(feels) if feels is not None else None,
+        "weather_description": today.get("wx_text") or None,
+        "rain_probability": today.get("pop") if today.get("pop") is not None else None,
         "temperature_unit": "°C" if units == "metric" else ("°F" if units == "imperial" else "K"),
         "units": units,
         "time_format": time_format,

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+
+  <defs>
+    <pattern id="dotsFine" patternUnits="userSpaceOnUse" width="2" height="2">
+      <circle cx="0.55" cy="0.55" r="0.32" fill="#000" stroke="none"/>
+    </pattern>
+    <pattern id="dotsShadow" patternUnits="userSpaceOnUse" width="2.6" height="2.6">
+      <circle cx="0.45" cy="0.45" r="0.28" fill="#000" stroke="none"/>
+    </pattern>
+    <linearGradient id="lowerShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.20" stop-color="#000"/>
+      <stop offset="0.50" stop-color="#666"/>
+      <stop offset="1.00" stop-color="#fff"/>
+    </linearGradient>
+  </defs>
+
+    <clipPath id="out022d" clipPathUnits="userSpaceOnUse"><path d="M0 0 H64 V64 H0 Z M27.5 25.5 H14.2 C11.4 25.5 9.2 23.3 9.2 20.6 C9.2 17.9 11.4 15.8 14.1 15.8 C14.6 13.0 17.2 11.0 20.4 11.0 C23.8 11.0 26.5 13.4 27.2 16.4 C29.6 16.6 31.5 18.6 31.5 21.0 C31.5 23.6 29.6 25.5 27.5 25.5 Z M52.2 36.2 H40.6 C38.0 36.2 36.0 34.2 36.0 31.6 C36.0 29.0 38.0 27.2 40.5 27.2 C41.0 24.6 43.4 22.6 46.2 22.6 C49.2 22.6 51.5 24.8 52.1 27.4 C54.2 27.6 55.8 29.4 55.8 31.6 C55.8 34.0 54.2 36.2 52.2 36.2 Z" clip-rule="evenodd"/></clipPath>
+    <g clip-path="url(#out022d)">
+    <mask id="out022dSun" maskUnits="userSpaceOnUse"><rect width="64" height="64" fill="#000"/><circle cx="32" cy="26" r="13.5" fill="url(#lowerShade)"/></mask>
+    <g transform="translate(1.6,2.0)" opacity="0.45"><circle cx="32" cy="26" r="13.5" fill="url(#dotsShadow)" stroke="none"/></g>
+    <circle cx="32" cy="26" r="13.5" fill="url(#dotsFine)" stroke="none" mask="url(#out022dSun)"/>
+    <circle cx="32" cy="26" r="13.5" fill="none" stroke="#000" stroke-width="1.55"/>
+    <line x1="32.00" y1="10.50" x2="32.00" y2="4.50" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="42.96" y1="15.04" x2="47.20" y2="10.80" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="47.50" y1="26.00" x2="53.50" y2="26.00" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="42.96" y1="36.96" x2="47.20" y2="41.20" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="32.00" y1="41.50" x2="32.00" y2="47.50" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="21.04" y1="36.96" x2="16.80" y2="41.20" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="16.50" y1="26.00" x2="10.50" y2="26.00" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    <line x1="21.04" y1="15.04" x2="16.80" y2="10.80" stroke="#000" stroke-width="1.55" stroke-linecap="round"/>
+    </g>
+    <mask id="m022a" maskUnits="userSpaceOnUse"><rect width="64" height="64" fill="#000"/><path d="M27.5 25.5 H14.2 C11.4 25.5 9.2 23.3 9.2 20.6 C9.2 17.9 11.4 15.8 14.1 15.8 C14.6 13.0 17.2 11.0 20.4 11.0 C23.8 11.0 26.5 13.4 27.2 16.4 C29.6 16.6 31.5 18.6 31.5 21.0 C31.5 23.6 29.6 25.5 27.5 25.5 Z" fill="url(#lowerShade)"/></mask>
+    <g transform="translate(1.6,2.0)" opacity="0.45"><path d="M27.5 25.5 H14.2 C11.4 25.5 9.2 23.3 9.2 20.6 C9.2 17.9 11.4 15.8 14.1 15.8 C14.6 13.0 17.2 11.0 20.4 11.0 C23.8 11.0 26.5 13.4 27.2 16.4 C29.6 16.6 31.5 18.6 31.5 21.0 C31.5 23.6 29.6 25.5 27.5 25.5 Z" fill="url(#dotsShadow)" stroke="none"/></g>
+    <path d="M27.5 25.5 H14.2 C11.4 25.5 9.2 23.3 9.2 20.6 C9.2 17.9 11.4 15.8 14.1 15.8 C14.6 13.0 17.2 11.0 20.4 11.0 C23.8 11.0 26.5 13.4 27.2 16.4 C29.6 16.6 31.5 18.6 31.5 21.0 C31.5 23.6 29.6 25.5 27.5 25.5 Z" fill="url(#dotsFine)" stroke="none" mask="url(#m022a)"/>
+    <path d="M27.5 25.5 H14.2 C11.4 25.5 9.2 23.3 9.2 20.6 C9.2 17.9 11.4 15.8 14.1 15.8 C14.6 13.0 17.2 11.0 20.4 11.0 C23.8 11.0 26.5 13.4 27.2 16.4 C29.6 16.6 31.5 18.6 31.5 21.0 C31.5 23.6 29.6 25.5 27.5 25.5 Z" fill="none" stroke="#000" stroke-width="1.55" stroke-linejoin="round" stroke-linecap="round"/>
+    <mask id="m022b" maskUnits="userSpaceOnUse"><rect width="64" height="64" fill="#000"/><path d="M52.2 36.2 H40.6 C38.0 36.2 36.0 34.2 36.0 31.6 C36.0 29.0 38.0 27.2 40.5 27.2 C41.0 24.6 43.4 22.6 46.2 22.6 C49.2 22.6 51.5 24.8 52.1 27.4 C54.2 27.6 55.8 29.4 55.8 31.6 C55.8 34.0 54.2 36.2 52.2 36.2 Z" fill="url(#lowerShade)"/></mask>
+    <g transform="translate(1.6,2.0)" opacity="0.45"><path d="M52.2 36.2 H40.6 C38.0 36.2 36.0 34.2 36.0 31.6 C36.0 29.0 38.0 27.2 40.5 27.2 C41.0 24.6 43.4 22.6 46.2 22.6 C49.2 22.6 51.5 24.8 52.1 27.4 C54.2 27.6 55.8 29.4 55.8 31.6 C55.8 34.0 54.2 36.2 52.2 36.2 Z" fill="url(#dotsShadow)" stroke="none"/></g>
+    <path d="M52.2 36.2 H40.6 C38.0 36.2 36.0 34.2 36.0 31.6 C36.0 29.0 38.0 27.2 40.5 27.2 C41.0 24.6 43.4 22.6 46.2 22.6 C49.2 22.6 51.5 24.8 52.1 27.4 C54.2 27.6 55.8 29.4 55.8 31.6 C55.8 34.0 54.2 36.2 52.2 36.2 Z" fill="url(#dotsFine)" stroke="none" mask="url(#m022b)"/>
+    <path d="M52.2 36.2 H40.6 C38.0 36.2 36.0 34.2 36.0 31.6 C36.0 29.0 38.0 27.2 40.5 27.2 C41.0 24.6 43.4 22.6 46.2 22.6 C49.2 22.6 51.5 24.8 52.1 27.4 C54.2 27.6 55.8 29.4 55.8 31.6 C55.8 34.0 54.2 36.2 52.2 36.2 Z" fill="none" stroke="#000" stroke-width="1.55" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

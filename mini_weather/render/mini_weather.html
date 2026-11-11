@@ -2,69 +2,102 @@
 
 {% block content %}
 <div class="mini-weather-shell{% if not show_icons %} no-icons{% endif %}{% if color_icons %} color-icons{% endif %}" data-forecast-days="{{ forecast_days }}" lang="{{ language }}">
-    <div class="mini-weather-title">{{ title }}</div>
-    <div class="mini-weather-date">{{ date }}</div>
-
-    <div class="mini-weather-layout">
-        {# Determine unit symbols for current and range displays.
-           - Metric/Imperial: current shows °C/°F, ranges show only °
-           - Standard (Kelvin): both current and ranges show K
-        #}
-        {% if units == 'metric' %}
-            {% set unit_symbol_current = '°C' %}
-            {% set unit_symbol_range = '°' %}
-        {% elif units == 'imperial' %}
-            {% set unit_symbol_current = '°F' %}
-            {% set unit_symbol_range = '°' %}
-        {% else %}
-            {% set unit_symbol_current = 'K' %}
-            {% set unit_symbol_range = 'K' %}
-        {% endif %}
-        <section class="current-card">
-            <div class="current-label">{{ current_label }}</div>
-                        <div class="current-main">
-                                {% if show_icons %}
-                                <img class="current-icon" src="{{ current_day_icon }}" alt="Current weather icon">
-                                {% endif %}
-                                {# determine number of digits (ignore leading '-') and clamp to 3 #}
-                                {% set temp_str = current_temperature|string %}
-                                {% set temp_digits = (temp_str|replace('-', ''))|length %}
-                                {% if temp_digits > 3 %}
-                                    {% set temp_class = 3 %}
-                                {% else %}
-                                    {% set temp_class = temp_digits %}
-                                {% endif %}
-                                <div class="current-temp digits-{{ temp_class }}">{{ current_temperature }}<span class="unit">{{ unit_symbol_current }}</span></div>
-                        </div>
-            <div class="current-range">
-                <span class="range-high">▲ {{ current_high }}<span class="unit">{{ unit_symbol_range }}</span></span>
-                <span class="range-low">▼ {{ current_low }}<span class="unit">{{ unit_symbol_range }}</span></span>
+    <header class="mw-header">
+        <div class="mw-title">{{ title }}</div>
+        <div class="mw-header-date">
+            <div class="mw-date-line">
+                <div class="mw-date">{{ date }}</div>
+                <div class="mw-weekday">{{ weekday }}</div>
             </div>
-        </section>
+            {% if updated_label %}
+            <div class="mw-updated">
+                <svg class="mw-refresh-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+                    <path d="M18.2 1.2 L22.8 6.2 L16.4 7.2 Z" fill="currentColor"/>
+                </svg>
+                <span>{{ updated_label }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </header>
 
-        <section class="forecast-list">
-            {% for day in forecast_rows %}
-            <div class="forecast-row">
-                <div class="forecast-left">
-                    {% if show_icons %}
-                    <img class="forecast-icon" src="{{ day.icon }}" alt="{{ day.day }} icon">
+    <hr class="mw-rule mw-rule-solid">
+
+    {# Determine unit symbols for current and range displays.
+       - Metric/Imperial: current shows °C/°F, ranges show only °
+       - Standard (Kelvin): both current and ranges show K
+    #}
+    {% if units == 'metric' %}
+        {% set unit_symbol_current = '°C' %}
+        {% set unit_symbol_range = '°' %}
+    {% elif units == 'imperial' %}
+        {% set unit_symbol_current = '°F' %}
+        {% set unit_symbol_range = '°' %}
+    {% else %}
+        {% set unit_symbol_current = 'K' %}
+        {% set unit_symbol_range = 'K' %}
+    {% endif %}
+
+    <section class="mw-hero">
+        <div class="mw-hero-main">
+            <div class="mw-hero-left">
+                {% set temp_str = current_temperature|string %}
+                {% set temp_digits = (temp_str|replace('-', ''))|length %}
+                {% if temp_digits > 3 %}
+                    {% set temp_class = 3 %}
+                {% else %}
+                    {% set temp_class = temp_digits %}
+                {% endif %}
+                <div class="current-temp digits-{{ temp_class }}">{{ current_temperature }}<span class="unit">{{ unit_symbol_current }}</span></div>
+                <div class="current-range">
+                    <span class="range-high">▲ {{ current_high }}<span class="unit">{{ unit_symbol_range }}</span></span>
+                    <span class="range-low">▼ {{ current_low }}<span class="unit">{{ unit_symbol_range }}</span></span>
+                </div>
+                {% if feels_like_label or rain_label %}
+                <div class="mw-secondary">
+                    {% if feels_like_label %}
+                    <div class="mw-feels">{{ feels_like_label }}</div>
                     {% endif %}
-                    <span class="forecast-day">{{ day.day }}</span>
+                    {% if rain_label %}
+                    <div class="mw-rain">{{ rain_label }}</div>
+                    {% endif %}
                 </div>
-                <div class="forecast-range">
-                    <span class="range-high">▲ {{ day.high }}<span class="unit">{{ unit_symbol_range }}</span></span>
-                    <span class="range-low">▼ {{ day.low }}<span class="unit">{{ unit_symbol_range }}</span></span>
-                </div>
+                {% endif %}
             </div>
-            {% endfor %}
-        </section>
-    </div>
+            <div class="mw-hero-right">
+                {% if show_icons %}
+                <img class="current-icon" src="{{ current_day_icon }}" alt="Current weather icon">
+                {% endif %}
+                {% if weather_description %}
+                <div class="mw-wx">{{ weather_description }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <hr class="mw-rule mw-rule-dashed">
+
+    <section class="forecast-list">
+        {% for day in forecast_rows %}
+        <div class="forecast-col">
+            <div class="forecast-day">{{ day.day }}</div>
+            {% if show_icons %}
+            <img class="forecast-icon" src="{{ day.icon }}" alt="{{ day.day }} icon">
+            {% endif %}
+            <div class="forecast-range">
+                <span class="range-high">▲ {{ day.high }}<span class="unit">{{ unit_symbol_range }}</span></span>
+                <span class="range-sep"> / </span>
+                <span class="range-low">▼ {{ day.low }}<span class="unit">{{ unit_symbol_range }}</span></span>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
 </div>
 
 <script>
     (function () {
         function fitMiniWeatherTitle() {
-            const title = document.querySelector('.mini-weather-title');
+            const title = document.querySelector('.mw-title');
             if (!title) return;
 
             const computed = window.getComputedStyle(title);
@@ -72,32 +105,29 @@
             const minScale = parseFloat(computed.getPropertyValue('--title-min-scale')) || 0.55;
             const minSize = originalSize * minScale;
 
-            // Reset to original size before measuring.
             title.style.fontSize = '';
-
-            // Temporarily remove line-clamp so we can measure true content height.
             title.style.webkitLineClamp = 'none';
             title.style.overflow = 'visible';
 
-            const lineHeight = parseFloat(window.getComputedStyle(title).lineHeight);
-            const maxTwoLineHeight = lineHeight * 2 + 2; // +2px fudge for sub-pixel rounding
+            const lineHeight = parseFloat(window.getComputedStyle(title).lineHeight) || originalSize * 1.15;
+            const maxTwoLineHeight = lineHeight * 2 + 2;
 
-            if (title.scrollHeight <= maxTwoLineHeight) {
-                // Fits in 2 lines at default size — restore and done.
+            const overflows = function () {
+                return title.scrollWidth > title.clientWidth + 1 || title.scrollHeight > maxTwoLineHeight;
+            };
+
+            if (!overflows()) {
                 title.style.webkitLineClamp = '';
                 title.style.overflow = '';
                 return;
             }
 
-            // Binary search: find largest font size that fits within 2 lines.
             let low = minSize;
             let high = originalSize;
-
             while (high - low > 0.5) {
                 const mid = (low + high) / 2;
                 title.style.fontSize = mid + 'px';
-                const lh = parseFloat(window.getComputedStyle(title).lineHeight);
-                if (title.scrollHeight > lh * 2 + 2) {
+                if (overflows()) {
                     high = mid;
                 } else {
                     low = mid;
@@ -105,45 +135,38 @@
             }
 
             title.style.fontSize = Math.max(minSize, low) + 'px';
-
-            // Restore CSS line-clamp (handles ellipsis if still overflowing at minSize).
             title.style.webkitLineClamp = '';
             title.style.overflow = '';
         }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', fitMiniWeatherTitle, { once: true });
-        } else {
-            fitMiniWeatherTitle();
-        }
-
-        window.addEventListener('resize', fitMiniWeatherTitle);
-
-        // Apply .large-temps class to all range elements if any value has 3+ digits.
         function applyLargeTempsClass() {
             const ranges = document.querySelectorAll('.current-range, .forecast-range');
             let hasLarge = false;
             ranges.forEach(function (el) {
                 el.querySelectorAll('.range-high, .range-low').forEach(function (span) {
-                    // Extract numeric part only (strip arrows, spaces, units)
                     const num = span.textContent.replace(/[^0-9]/g, '');
                     if (num.length >= 3) hasLarge = true;
                 });
             });
             if (hasLarge) {
                 ranges.forEach(function (el) { el.classList.add('large-temps'); });
-                // Also mark the forecast-list so CSS can reset enhanced sizing
-                // without relying on :has() selectors.
                 var forecastList = document.querySelector('.forecast-list');
                 if (forecastList) { forecastList.classList.add('large-temps'); }
             }
         }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', applyLargeTempsClass, { once: true });
-        } else {
+        function init() {
+            fitMiniWeatherTitle();
             applyLargeTempsClass();
         }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init, { once: true });
+        } else {
+            init();
+        }
+
+        window.addEventListener('resize', fitMiniWeatherTitle);
     })();
 </script>
 {% endblock %}

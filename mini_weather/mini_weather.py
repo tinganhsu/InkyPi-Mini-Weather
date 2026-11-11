@@ -1,6 +1,7 @@
 import logging
 import re
 import unicodedata
+from pathlib import Path
 
 import pytz
 import requests
@@ -60,38 +61,74 @@ LANGUAGE_LABELS = {
     "de": {
         "now": "JETZT",
         "days": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+        "header_days": ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+        "updated_at": "Aktualisiert {time}",
+        "feels_like": "Gefühlt {temp}{unit}",
+        "rain": "Regen {pct}%",
     },
     "en": {
         "now": "NOW",
         "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "header_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        "updated_at": "Updated {time}",
+        "feels_like": "Feels {temp}{unit}",
+        "rain": "Rain {pct}%",
     },
     "es": {
         "now": "AHORA",
         "days": ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+        "header_days": ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"],
+        "updated_at": "Actualizado {time}",
+        "feels_like": "Sensación {temp}{unit}",
+        "rain": "Lluvia {pct}%",
     },
     "fr": {
         "now": "MAINT",
         "days": ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+        "header_days": ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
+        "updated_at": "Mis à jour {time}",
+        "feels_like": "Ressenti {temp}{unit}",
+        "rain": "Pluie {pct}%",
     },
     "id": {
         "now": "SEK",
         "days": ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
+        "header_days": ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+        "updated_at": "Diperbarui {time}",
+        "feels_like": "Terasa {temp}{unit}",
+        "rain": "Hujan {pct}%",
     },
     "it": {
         "now": "ORA",
         "days": ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+        "header_days": ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"],
+        "updated_at": "Aggiornato {time}",
+        "feels_like": "Percepita {temp}{unit}",
+        "rain": "Pioggia {pct}%",
     },
     "nl": {
         "now": "NU",
         "days": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
+        "header_days": ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"],
+        "updated_at": "Bijgewerkt {time}",
+        "feels_like": "Voelt als {temp}{unit}",
+        "rain": "Regen {pct}%",
     },
     "pt": {
         "now": "AGORA",
         "days": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+        "header_days": ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"],
+        "updated_at": "Atualizado {time}",
+        "feels_like": "Sensação {temp}{unit}",
+        "rain": "Chuva {pct}%",
     },
     "zh-tw": {
         "now": "現在",
         "days": ["週一", "週二", "週三", "週四", "週五", "週六", "週日"],
+        "header_days": ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"],
+        "updated_at": "{time} 更新",
+        "feels_like": "體感 {temp}{unit}",
+        "rain": "降雨 {pct}%",
     },
 }
 
@@ -280,6 +317,293 @@ def format_localized_date(language, dt):
     return f"{month} {day}, {year}"
 
 
+def format_header_weekday(language, dt):
+    """Full weekday name for the header date block (e.g. 星期三, Wednesday)."""
+    labels = get_language_labels(language)
+    days = labels.get("header_days")
+    if days:
+        return days[dt.weekday() % 7]
+    return LANGUAGE_LABELS["en"]["header_days"][dt.weekday() % 7]
+
+
+def format_updated_label(language, dt, time_format="24h"):
+    """Label shown under the current temperature.
+
+    The rendered image is static on an e-paper display, so the clock time of
+    the refresh (e.g. "08:06 更新" / "Updated 08:06") stays accurate until the
+    next refresh — more useful than a literal "just now".
+    """
+    labels = get_language_labels(language)
+    short = normalize_language_key(language)
+    # Traditional Chinese official style is 24-hour; otherwise honour device format.
+    if short == "zh-tw" or time_format != "12h":
+        time_str = dt.strftime("%H:%M")
+    else:
+        time_str = dt.strftime("%I:%M %p").lstrip("0")
+    template = labels.get("updated_at") or LANGUAGE_LABELS["en"]["updated_at"]
+    return template.replace("{time}", time_str)
+
+
+def format_feels_like_label(language, value, unit_symbol="°"):
+    """Localized current feels-like label, or empty if the value is missing.
+
+    Examples: "體感 21°", "Feels 21°". Kelvin uses a leading space ("Feels 294 K").
+    """
+    if value is None:
+        return ""
+    text_value = str(value).strip()
+    if not text_value or text_value in {"--", "None", "N/A"}:
+        return ""
+    # Keep a leading minus, but require a numeric body.
+    body = text_value[1:] if text_value.startswith("-") else text_value
+    if not body.replace(".", "", 1).isdigit():
+        return ""
+    if "." in body:
+        temp = text_value
+    else:
+        temp = str(int(text_value))
+    if not unit_symbol or unit_symbol.startswith("°"):
+        unit = unit_symbol or "°"
+    else:
+        unit = f" {unit_symbol}"
+    labels = get_language_labels(language)
+    template = labels.get("feels_like") or LANGUAGE_LABELS["en"]["feels_like"]
+    return template.replace("{temp}", temp).replace("{unit}", unit)
+
+
+
+
+def normalize_rain_probability(value):
+    """Return an integer 0–100 rain probability, or None if unavailable.
+
+    Accepts CWA-style percentages ("20", 20) and OWM-style fractions (0.2).
+    A bare 0 or 0.0 is a real 0% and is kept. "-" / "--" / blanks are hidden.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, str):
+        text_value = value.strip().replace("%", "")
+        if not text_value or text_value in {"-", "—", "–", "--", "None", "N/A"}:
+            return None
+        try:
+            number = float(text_value)
+        except ValueError:
+            return None
+        # String "0.2" from a fraction source is possible; "20" is a percent.
+        if "." in text_value and 0 < number <= 1:
+            number *= 100
+    else:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        # OpenWeatherMap daily/hourly pop is a 0–1 fraction.
+        if 0 <= number <= 1 and not isinstance(value, int):
+            number *= 100
+    if number < 0 or number > 100:
+        return None
+    return int(round(number))
+
+
+def format_rain_label(language, value):
+    """Localized rain-probability label, or empty if the value is missing.
+
+    Examples: "降雨 20%", "Rain 20%". A 0% chance is shown.
+    """
+    pct = normalize_rain_probability(value)
+    if pct is None:
+        return ""
+    labels = get_language_labels(language)
+    template = labels.get("rain") or LANGUAGE_LABELS["en"]["rain"]
+    return template.replace("{pct}", str(pct))
+
+
+def format_weather_description(value):
+    """Today's short weather description, or empty if missing."""
+    if value is None:
+        return ""
+    text_value = str(value).strip()
+    if not text_value or text_value in {"--", "-", "None", "N/A"}:
+        return ""
+    return text_value
+
+
+# Open-Meteo uses WMO weather interpretation codes. Maps are short display
+# labels for the hero description; unknown codes stay hidden.
+_OPEN_METEO_WX_TEXT = {
+    "en": {
+        0: "Clear",
+        1: "Mainly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Fog",
+        48: "Icy fog",
+        51: "Light drizzle",
+        53: "Drizzle",
+        55: "Heavy drizzle",
+        56: "Light freezing drizzle",
+        57: "Freezing drizzle",
+        61: "Light rain",
+        63: "Rain",
+        65: "Heavy rain",
+        66: "Light freezing rain",
+        67: "Freezing rain",
+        71: "Light snow",
+        73: "Snow",
+        75: "Heavy snow",
+        77: "Snow grains",
+        80: "Light showers",
+        81: "Showers",
+        82: "Heavy showers",
+        85: "Light snow showers",
+        86: "Snow showers",
+        95: "Thunderstorm",
+        96: "Thunderstorm with hail",
+        99: "Thunderstorm with hail",
+    },
+    "zh-tw": {
+        0: "晴",
+        1: "晴時多雲",
+        2: "多雲時晴",
+        3: "陰",
+        45: "霧",
+        48: "霧凇",
+        51: "小毛毛雨",
+        53: "毛毛雨",
+        55: "大毛毛雨",
+        56: "輕度凍毛雨",
+        57: "凍毛雨",
+        61: "小雨",
+        63: "雨",
+        65: "大雨",
+        66: "輕度凍雨",
+        67: "凍雨",
+        71: "小雪",
+        73: "雪",
+        75: "大雪",
+        77: "雪粒",
+        80: "小陣雨",
+        81: "陣雨",
+        82: "大陣雨",
+        85: "小陣雪",
+        86: "陣雪",
+        95: "雷雨",
+        96: "雷雹",
+        99: "雷雹",
+    },
+}
+
+
+def open_meteo_weather_description(weather_code, language="en"):
+    if weather_code is None or weather_code == "":
+        return ""
+    try:
+        code = int(weather_code)
+    except (TypeError, ValueError):
+        return ""
+    short = language if language in _OPEN_METEO_WX_TEXT else "en"
+    # normalize_language_key may not be needed if caller already normalized.
+    try:
+        short = normalize_language_key(language)
+    except Exception:
+        pass
+    table = _OPEN_METEO_WX_TEXT.get(short) or _OPEN_METEO_WX_TEXT["en"]
+    return table.get(code) or _OPEN_METEO_WX_TEXT["en"].get(code) or ""
+
+
+def extract_owm_today_extras(weather_data):
+    """Best-effort description and 0–100 rain probability from OWM One Call."""
+    description = ""
+    rain = None
+    if not isinstance(weather_data, dict):
+        return description, rain
+    current = weather_data.get("current") or {}
+    weather = current.get("weather") or []
+    if weather and isinstance(weather[0], dict):
+        description = format_weather_description(
+            weather[0].get("description") or weather[0].get("main")
+        )
+    daily = weather_data.get("daily") or []
+    if daily and isinstance(daily[0], dict) and "pop" in daily[0]:
+        rain = normalize_rain_probability(daily[0].get("pop"))
+    if rain is None:
+        # Fall back to the highest remaining hourly pop today / next 24h.
+        pops = []
+        for hour in (weather_data.get("hourly") or [])[:24]:
+            if isinstance(hour, dict) and hour.get("pop") is not None:
+                pops.append(normalize_rain_probability(hour.get("pop")))
+        pops = [p for p in pops if p is not None]
+        if pops:
+            rain = max(pops)
+    return description, rain
+
+
+def extract_open_meteo_today_extras(weather_data, language="en"):
+    """Best-effort description and rain probability from an Open-Meteo payload."""
+    description = ""
+    rain = None
+    if not isinstance(weather_data, dict):
+        return description, rain
+    current = weather_data.get("current") or {}
+    description = open_meteo_weather_description(current.get("weather_code"), language)
+    daily = weather_data.get("daily") or {}
+    daily_pops = daily.get("precipitation_probability_max") or []
+    if daily_pops and daily_pops[0] is not None:
+        rain = normalize_rain_probability(daily_pops[0])
+    if rain is None:
+        hourly = weather_data.get("hourly") or {}
+        times = hourly.get("time") or []
+        probs = hourly.get("precipitation_probability") or []
+        today = None
+        if current.get("time"):
+            today = str(current.get("time"))[:10]
+        pops = []
+        for i, time_str in enumerate(times):
+            if i >= len(probs):
+                break
+            if today and not str(time_str).startswith(today):
+                continue
+            pct = normalize_rain_probability(probs[i])
+            if pct is not None:
+                pops.append(pct)
+            if today is None and len(pops) >= 24:
+                break
+        if pops:
+            rain = max(pops)
+    return description, rain
+
+
+def apply_best_effort_conditions(template_params, weather_data, provider, language="en"):
+    """Fill weather_description / rain_probability when the parent parser omitted them."""
+    if not isinstance(template_params, dict):
+        return template_params
+    if provider == "OpenWeatherMap":
+        description, rain = extract_owm_today_extras(weather_data)
+    elif provider == "OpenMeteo":
+        description, rain = extract_open_meteo_today_extras(weather_data, language)
+    else:
+        return template_params
+    if not template_params.get("weather_description") and description:
+        template_params["weather_description"] = description
+    if template_params.get("rain_probability") is None and rain is not None:
+        template_params["rain_probability"] = rain
+    return template_params
+
+
+def resolve_display_icon(icon_path, color_icons=False):
+    """Swap a colour PNG for the outline + halftone SVG when colour icons are off."""
+    if color_icons or not icon_path:
+        return icon_path
+
+    path = Path(str(icon_path))
+    outline = path.parent / "outline" / f"{path.stem}.svg"
+    if outline.is_file():
+        return str(outline)
+    return icon_path
+
+
+
+
 def get_language_labels(language):
     lang = (language or "").strip().lower().replace("_", "-")
     # exact key
@@ -393,6 +717,7 @@ class MiniWeather(Weather):
                 local_tz,
                 time_format,
                 device_config,
+                language,
             )
         except Exception as exc:
             logger.error("%s request failed: %s", weather_provider, exc)
@@ -430,20 +755,43 @@ class MiniWeather(Weather):
                 i + 1, target_date.strftime("%Y-%m-%d"), target_date.strftime("%A"), row["weekday_index"],
             )
 
+        color_icons = settings.get("colorIcons", "false") == "true"
+        forecast_rows = self._localize_forecast_rows(forecast_rows, labels)
+        if not color_icons:
+            current_icon = template_params.get("current_day_icon")
+            if current_icon:
+                template_params["current_day_icon"] = resolve_display_icon(current_icon, color_icons)
+            for row in forecast_rows:
+                if row.get("icon"):
+                    row["icon"] = resolve_display_icon(row["icon"], color_icons)
+
         template_params.update(
             {
                 "title": title,
                 "language": normalize_language_key(language),
                 "current_label": labels["now"],
                 "date": localized_date,
+                "weekday": format_header_weekday(language, now),
+                "updated_label": format_updated_label(language, now, time_format),
+                "feels_like_label": format_feels_like_label(
+                    language,
+                    template_params.get("feels_like"),
+                    "°" if units in ("metric", "imperial") else "K",
+                ),
+                "weather_description": format_weather_description(
+                    template_params.get("weather_description")
+                ),
+                "rain_label": format_rain_label(
+                    language, template_params.get("rain_probability")
+                ),
                 "current_high": current_day["high"],
                 "current_low": current_day["low"],
-                "forecast_rows": self._localize_forecast_rows(forecast_rows, labels),
+                "forecast_rows": forecast_rows,
                 "forecast_days": len(forecast_rows),
                 "provider_timezone": provider_tz.zone,
                 "plugin_settings": settings,
                 "show_icons": settings.get("showIcons", "true") != "false",
-                "color_icons": settings.get("colorIcons", "false") == "true",
+                "color_icons": color_icons,
             }
         )
 
@@ -499,6 +847,7 @@ class MiniWeather(Weather):
         local_tz,
         time_format,
         device_config,
+        language="en",
     ):
         timezone_selection = settings.get("weatherTimeZone", "locationTimeZone")
         api_key = None
@@ -512,6 +861,7 @@ class MiniWeather(Weather):
             aqi_data = self.get_air_quality(api_key, lat, long)
             tz = self.parse_timezone(weather_data) if timezone_selection == "locationTimeZone" else local_tz
             template_params = self.parse_weather_data(weather_data, aqi_data, tz, units, time_format, lat)
+            apply_best_effort_conditions(template_params, weather_data, "OpenWeatherMap", language)
             return template_params, tz, api_key
 
         if weather_provider == "OpenMeteo":
@@ -519,6 +869,7 @@ class MiniWeather(Weather):
             aqi_data = self.get_open_meteo_air_quality(lat, long)
             tz = self.parse_open_meteo_timezone(weather_data) if timezone_selection == "locationTimeZone" else local_tz
             template_params = self.parse_open_meteo_data(weather_data, aqi_data, tz, units, time_format, lat)
+            apply_best_effort_conditions(template_params, weather_data, "OpenMeteo", language)
             return template_params, tz, api_key
 
         if weather_provider == "CWA":

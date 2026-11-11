@@ -1,87 +1,80 @@
 # InkyPi Mini Weather 外掛
 
-Mini Weather 是一個輕量化的 InkyPi 天氣外掛，重點放在電子紙螢幕上的清楚顯示、快速載入與容易設定。
-
-Mini Weather **不是**原版 Weather 外掛的完整替代品，而是較簡化的選擇。它適合需要快速查看天氣、希望畫面更乾淨，或希望在電子紙上保持高可讀性的使用情境。
+Mini Weather 是 [InkyPi](https://github.com/fatihak/InkyPi) 的輕量天氣外掛。畫面只放目前天氣與短期每日預報，字級與間距偏大，方便在小尺寸電子紙上閱讀。
 
 ## 安裝
 
-使用 InkyPi CLI 安裝外掛，並提供外掛 ID 與 GitHub repository URL：
+用外掛 ID 與 repository URL 安裝：
 
 ```bash
 inkypi plugin install mini_weather https://github.com/saulob/InkyPi-Mini-Weather
 ```
 
-此外掛是 [InkyPi](https://github.com/fatihak/InkyPi) 電子紙顯示框架的擴充功能。
+中央氣象署來源在 `mini_weather/cwa_client.py`。要用 CWA，安裝進來的外掛目錄需要包含這個檔案。
 
-## 功能
+## 畫面上有什麼
 
-- 顯示目前天氣、天氣圖示與溫度
-- 顯示未來數日每日天氣預報
-- 顯示每日最高溫與最低溫
-- 支援多語系與在地化日期格式
-- 可用座標手動指定地點
-- 可用 Quick Location 快速選擇預設城市
-- 依據地點處理時區，也可改用本機時區
-- 可設定預報天數
-- 可選擇溫度單位
-- 支援 Open-Meteo 與 OpenWeatherMap 天氣來源
-- 可選擇使用地點名稱或自訂文字作為標題
-- 可顯示或隱藏天氣圖示
-- 可選擇彩色圖示
+- 標題：地點名稱或自訂文字
+- 在地化日期、完整星期，以及這次刷新的時間（例如「08:06 更新」）
+- 目前溫度，以及當日最高溫、最低溫
+- 有資料時才顯示體感溫度、降雨機率、天氣描述；缺資料時該列留空
+- 今日圖示，以及其後 1 到 4 天的星期、圖示與高低溫
 
-## 新增功能與城市
+圖示可以關閉。彩色圖示關閉時，改用 `icons/outline/` 的線條 SVG。
 
-Quick Location 已新增台灣常用城市，設定時可直接從下拉選單選擇，不必手動輸入經緯度：
+## 天氣來源
 
-- Taipei
-- Taoyuan
-- Taichung
-- Tainan
-- Kaohsiung
+| 來源 | 金鑰 | 地點 |
+| --- | --- | --- |
+| Open-Meteo | 不需要 | 經緯度，或 Quick Location |
+| OpenWeatherMap | InkyPi `.env` 的 `OPEN_WEATHER_MAP_SECRET` | 經緯度，或 Quick Location |
+| 中央氣象署（CWA） | InkyPi `.env` 的 `CWA_API_KEY` | 縣市與鄉鎮市區 |
 
-這些城市同時加入後端的地點名稱對照。當反向地理編碼失敗時，外掛仍可用 Quick Location 的城市名稱作為標題 fallback。
+Open-Meteo 與 OpenWeatherMap 可用 Quick Location、手動經緯度，或地圖點選。經緯度需在緯度 −90 到 90、經度 −180 到 180。時區可選地點時區或裝置時區。
 
-## 與原版 Weather 外掛的差異
+地點標題解析失敗時，依序改用 Quick Location 的城市名、座標附近的 Quick Location 城市，最後顯示座標。
 
-- 版面更輕量、簡潔
-- 重視遠距離可讀性
-- Quick Location 可加快設定與測試
-- 內建語系支援與在地化日期格式
-- 設定項目較少，使用流程更直接
-- 使用較大的文字與間距，提升電子紙畫面的辨識度
+### 中央氣象署
 
-## 設定項目
+選 CWA 之後，設定改為縣市與鄉鎮市區。名稱沿用[氣象資料開放平臺](https://opendata.cwa.gov.tw/)的鄉鎮市區清單；部分重名行政區會附上縣市，例如「臺北市中正區」。
 
-- 語言選擇，並依語系顯示日期格式
-- Quick Location 預設城市，或手動輸入緯度與經度
-- 天氣來源：Open-Meteo 或 OpenWeatherMap
-- OpenWeatherMap API key
-- 溫度單位選擇
-- 預報天數選擇
-- 標題模式：使用地點名稱或自訂文字
-- 顯示或隱藏天氣圖示
-- 是否使用彩色圖示
-- 時區選擇：使用地點時區或本機時區
-- 樣式設定，可調整版面顯示
+預報讀取鄉鎮市區週預報（F-D0047，資料集編號為對應三日預報編號加 2）。12 小時（或更短）時段會依台北時間併成每日資料：
 
-## 介面
+- 最高溫、最低溫取當日 MaxT / MinT
+- 天氣現象優先取白天（起始小時小於 18）的 Wx
+- 體感溫度依序取白天 AT、任一 AT、白天最高體感、當日最高體感、最低體感；資料沒有體感欄位時不顯示
+- 降雨機率優先取白天的 12 小時降雨機率（PoP12h），沒有再取當日較高的值；`-` 或空白不顯示
 
-- 極簡且易讀的畫面配置
-- 針對小尺寸螢幕調整間距
-- 清楚分隔目前天氣與未來預報
-- 設計上避免電子紙顯示時產生過多殘影
+CWA 的顯示時區固定為 `Asia/Taipei`。標題選地點時，顯示所選縣市加鄉鎮市區。
 
-## 注意事項
+在[氣象資料開放平臺](https://opendata.cwa.gov.tw/)申請授權碼後，寫進 InkyPi 的 `.env`：
 
-- Open-Meteo 不需要 API key
-- OpenWeatherMap 需要 API key
-- 外掛設計目標是簡單、快速，避免過重的渲染流程
-- 可搭配不同螢幕尺寸與方向使用
+```bash
+CWA_API_KEY=你的授權碼
+```
+
+OpenWeatherMap：
+
+```bash
+OPEN_WEATHER_MAP_SECRET=你的金鑰
+```
+
+## 設定
+
+- 天氣來源：Open-Meteo、OpenWeatherMap、CWA
+- 語言：荷蘭文、英文、法文、德文、印尼文、義大利文、葡萄牙文、西班牙文、繁體中文
+- 溫度單位：°F、°C、K
+- 預報天數：1 到 4（今天之後的天數，預設 4）
+- 標題：地點名稱或自訂文字
+- 顯示圖示、彩色圖示
+- 時區：地點時區或裝置時區（CWA 固定台北時間，此項會隱藏）
+
+Quick Location：Amsterdam、Berlin、Buenos Aires、Jakarta、London、Madrid、New York、Paris、Rio de Janeiro、Rome、São Paulo、Taipei、Taoyuan、Taichung、Tainan、Kaohsiung、Tokyo。
+
+繁體中文的日期為「4月1日」這種格式，標題星期為「星期三」，預報列為「週一」到「週日」。更新時間固定 24 小時制。其他語言的 12 / 24 小時制跟隨 InkyPi 裝置設定。
 
 ## 截圖
 
-- Mini Weather 在主畫面上的顯示效果
-- 外掛設定畫面
+左圖是 800×480 的畫面：繁體中文、臺北市大安區、體感溫度、降雨機率與四日預報。右圖是選了中央氣象署之後的設定頁。
 
-<p align="center"> <img src="screenshots/example.png?v=2" width="45%" /> <img src="screenshots/settings.png?v=2" width="45%" /> </p>
+<p align="center"> <img src="screenshots/example.png?v=3" width="45%" /> <img src="screenshots/settings.png?v=3" width="45%" /> </p>

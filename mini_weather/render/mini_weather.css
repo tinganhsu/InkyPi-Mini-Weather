@@ -1,7 +1,22 @@
+@font-face {
+  font-family: "Oswald";
+  font-style: normal;
+  font-weight: 200 700;
+  src: url("fonts/Oswald-VariableFont_wght.ttf") format("truetype");
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html,
+body,
+.container {
+  width: 100%;
+  height: 100%;
+  background: #fff;
 }
 
 .mini-weather-shell {
@@ -9,18 +24,29 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 0.8dvh;
-  padding: 0dvh 0.5dvw;
+  padding: 1.0dvh 1.6dvw 1.0dvh;
   overflow: hidden;
-  font-family: "Jost", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  background: #fff;
+  color: #000;
+  font-family: "Jost", "Noto Sans CJK TC", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
 
-.mini-weather-title {
-  text-align: center;
-  font-size: min(10.5dvh, 9.5dvw);
+/* ---- Header ---- */
+
+.mw-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2.0dvw;
+  flex: 0 0 auto;
+  padding: 0 0 0.8dvh;
+}
+
+.mw-title {
+  font-size: min(7.4dvh, 6.2dvw);
   font-weight: 700;
-  line-height: 1.18;
+  line-height: 1.15;
+  text-align: left;
   white-space: normal;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -28,548 +54,483 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  width: 100%;
-  /* minimum readable size used by title auto-fit script */
+  min-width: 0;
+  flex: 1 1 auto;
   --title-min-scale: 0.55;
 }
 
-.mini-weather-date {
-  text-align: center;
-  color: #3e3e3e;
-  font-size: min(7.4dvh, 6.8dvw);
-  font-weight: 500;
-  margin-top: 0.3dvh;
-}
-
-.mini-weather-layout {
-  display: grid;
-  /* keep stable column proportions so cards do not expand */
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.9fr);
-  gap: 2.2dvw;
-  align-items: stretch;
-  min-height: 0;
-  flex: 1;
-}
-
-.current-card,
-.forecast-row {
-  background: rgba(80, 80, 80, 0.09);
-  border-radius: 2.1dvw;
-}
-
-.current-card {
+.mw-header-date {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 0;
-  padding: 2.5dvh 1.8dvw 2.4dvh;
-  /* fixed card width to keep layout stable */
-  width: 36dvw;
-  min-width: 36dvw;
-  max-width: 36dvw;
-  overflow: hidden;
-  /* base temp font-size for scaling rules below */
-  --temp-base: min(22dvh, 20dvw);
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 0.25dvh;
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: max(18px, min(4.0dvh, 3.2dvw));
+  font-weight: 500;
+  line-height: 1.25;
+  padding-top: 0.2dvh;
 }
 
-.current-label {
-  width: 100%;
-  text-align: center;
-  font-size: min(8.0dvh, 6.6dvw);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.current-main {
+.mw-date-line {
   display: flex;
-  flex: 1;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 1.1dvw;
+  white-space: nowrap;
+}
+
+.mw-date,
+.mw-weekday {
+  color: #000;
+  white-space: nowrap;
+}
+
+/* ---- Rules ---- */
+
+.mw-rule {
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  height: 0;
+  color: #000;
+}
+
+.mw-rule-solid {
+  border-top: max(2px, 0.22dvw) solid #000;
+}
+
+.mw-rule-dashed {
+  border-top: max(2px, 0.22dvw) dashed #000;
+  margin-top: 0.2dvh;
+  margin-bottom: 0.2dvh;
+}
+
+/* ---- Hero (current conditions) ---- */
+
+.mw-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.4dvh;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.6dvh 0.4dvw 0.6dvh;
+}
+
+.mw-hero-main {
+  display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 0.77dvw;
-  /* keep icon and temperature on same line */
-  white-space: nowrap;
-  min-height: 0;
-}
-
-.current-icon {
-  width: min(24dvh, 21.5dvw);
-  height: min(24dvh, 21.5dvw);
-  object-fit: contain;
+  justify-content: space-between;
+  gap: 3.2dvw;
   flex: 0 0 auto;
-  filter: grayscale(1) brightness(0.68) contrast(0.9);
-  opacity: 0.88;
+  min-height: 0;
+  min-width: 0;
 }
 
-.color-icons .current-icon {
-  filter: none;
-  opacity: 1;
+.mw-hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mw-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  align-self: center;
+  flex: 0 0 auto;
+  height: auto;
+  min-width: 0;
+  max-width: 44%;
+  gap: 0.15dvh;
 }
 
 .current-temp {
-  display: inline-flex;
-  align-items: baseline;
-  font-size: calc(var(--temp-base) * 0.82);
+  display: block;
+  font-family: "Oswald", "Jost", sans-serif;
   font-weight: 700;
-  line-height: 0.92;
+  font-stretch: condensed;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
   white-space: nowrap;
-  flex: 0 0 auto;
+  --temp-base: min(32dvh, 28dvw);
+  font-size: var(--temp-base);
 }
 
 .current-temp .unit {
-  font-size: 0.55em;
-  font-weight: 600;
-  line-height: 1;
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: 700;
+  font-stretch: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  margin-left: 0;
+  padding-top: 0;
 }
 
-/* Scale temperature for different digit counts so value+unit fits inside fixed card */
 .current-temp.digits-2 {
-  font-size: calc(var(--temp-base) * 0.76);
+  font-size: var(--temp-base);
 }
+
 .current-temp.digits-3 {
-  font-size: calc(var(--temp-base) * 0.58);
+  font-size: calc(var(--temp-base) * 0.78);
+}
+
+.current-icon {
+  flex: 0 0 auto;
+  width: min(46dvh, 33dvw);
+  height: min(46dvh, 33dvw);
+  object-fit: contain;
+}
+
+.mw-wx {
+  font-weight: 600;
+  font-size: max(18px, min(3.8dvh, 3.0dvw));
+  line-height: 1.25;
+  text-align: center;
+  color: #000;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  /* Optical tuck: outline SVGs have empty viewBox padding under the glyph. */
+  margin-top: -3.4dvh;
+  position: relative;
+  z-index: 1;
 }
 
 .current-range,
 .forecast-range {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1.6dvw;
+  align-items: baseline;
   font-weight: 700;
   white-space: nowrap;
 }
 
+.current-range {
+  gap: 2.0dvw;
+  font-size: min(6.6dvh, 5.2dvw);
+  margin-top: 1.2dvh;
+}
+
+.mw-secondary {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 1.6dvh 2.8dvw;
+  flex: 0 0 auto;
+  margin-top: 1.0dvh;
+  padding-top: 0;
+}
+
+.mw-feels {
+  font-weight: 500;
+  font-size: max(18px, min(4.4dvh, 3.2dvw));
+  color: #000;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.mw-rain {
+  font-weight: 700;
+  font-size: max(18px, min(5.2dvh, 3.8dvw));
+  color: #000;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
 .range-high {
-  color: #b4222d;
+  color: #c41e3a;
 }
 
 .range-low {
-  color: #1c6eb6;
+  color: #111;
 }
 
-.forecast-list {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  gap: 1.2dvh;
-  min-height: 0;
-  flex: 1;
-  overflow: hidden;
-}
-
-.forecast-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 2.0dvw;
-  padding: 2.4dvh 2.8dvw;
-  background: transparent;
-  /* Equal rows that can shrink below content size so the last day is never clipped */
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: 2.1dvw;
-}
-
-.forecast-row:nth-child(odd) {
-  background: rgba(80, 80, 80, 0.09);
-}
-
-.forecast-left {
+.mw-updated {
   display: flex;
   align-items: center;
-  gap: 2.0dvw;
-  min-width: 0;
-}
-
-.forecast-icon {
-  width: min(10.0dvh, 7.5dvw);
-  height: min(10.0dvh, 7.5dvw);
-  max-height: 100%;
-  object-fit: contain;
-  flex: 0 0 auto;
-  filter: grayscale(1) brightness(0.68) contrast(0.9);
-  opacity: 0.88;
-}
-
-.color-icons .forecast-icon {
-  filter: none;
-  opacity: 1;
-}
-
-.forecast-day {
-  font-size: min(7.8dvh, 5.8dvw);
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  justify-content: flex-end;
+  gap: 0.5dvw;
+  margin-top: 0;
+  font-size: max(18px, min(2.8dvh, 2.2dvw));
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: #000;
   white-space: nowrap;
 }
 
+.mw-refresh-icon {
+  width: 1.2em;
+  height: 1.2em;
+  flex: 0 0 auto;
+  display: block;
+}
+
+/* ---- Forecast columns ---- */
+
+.forecast-list {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-evenly;
+  flex: 0 0 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 0.8dvh 0 0.2dvh;
+}
+
+.forecast-col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7dvh;
+  padding: 0.5dvh 0.6dvw 0.3dvh;
+  min-width: 0;
+  border-left: max(1px, 0.16dvw) solid #000;
+}
+
+.forecast-col:first-child {
+  border-left: none;
+}
+
+.forecast-day {
+  font-size: min(5.2dvh, 3.8dvw);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.forecast-icon {
+  width: min(14dvh, 11.5dvw);
+  height: min(14dvh, 11.5dvw);
+  max-width: 100%;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
 .forecast-range {
-  font-size: min(7.8dvh, 5.8dvw);
-  justify-self: end;
-}
-
-.current-range {
-  font-size: min(9.4dvh, 8.0dvw);
-  gap: 2.4dvw;
-}
-
-/* Shrink range text when any value has 3+ digits (e.g. Kelvin temps like 295K) */
-.current-range.large-temps {
-  font-size: min(7.5dvh, 6.4dvw);
-}
-
-.forecast-range.large-temps {
-  font-size: min(6.2dvh, 4.6dvw);
-}
-
-/* --- No-icons mode --- */
-.no-icons .current-main {
+  font-size: min(4.2dvh, 3.3dvw);
   justify-content: center;
+  gap: 0;
+  flex: 0 0 auto;
 }
+
+.forecast-range .range-sep {
+  color: #000;
+  font-weight: 500;
+  padding: 0 0.15em;
+}
+
+.current-range.large-temps {
+  font-size: min(5.2dvh, 4.2dvw);
+}
+
+.forecast-list.large-temps .forecast-range,
+.forecast-range.large-temps {
+  font-size: min(3.4dvh, 2.7dvw);
+}
+
+/* ---- No-icons mode ---- */
 
 .no-icons .current-temp {
-  font-size: calc(var(--temp-base) * 1.22);
-}
-
-.no-icons .current-temp.digits-2 {
-  font-size: calc(var(--temp-base) * 1.14);
+  font-size: calc(var(--temp-base) * 1.12);
 }
 
 .no-icons .current-temp.digits-3 {
-  font-size: calc(var(--temp-base) * 0.92);
+  font-size: calc(var(--temp-base) * 0.88);
 }
 
-.no-icons .forecast-left {
-  gap: 0;
+.no-icons .forecast-col {
+  justify-content: center;
+  gap: 1.4dvh;
 }
 
 .no-icons .forecast-day {
-  font-size: min(9.2dvh, 6.8dvw);
+  font-size: min(6.0dvh, 4.4dvw);
 }
 
-/* 4-day no-icons: pull back slightly so all 4 rows stay within bounds */
-[data-forecast-days="4"].no-icons .forecast-day {
-  font-size: min(8.2dvh, 6.8dvw);
+.no-icons .forecast-range {
+  font-size: min(4.8dvh, 3.6dvw);
 }
 
-/* 4-day with icons, 2-digit temps only */
-[data-forecast-days="4"]:not(.no-icons) .forecast-list:not(.large-temps) .forecast-day {
-  font-size: min(8.3dvh, 5.8dvw);
-}
+/* ---- Portrait / vertical orientation ---- */
 
-/* --- Forecast days scaling ---
-   Fewer days = rows grow vertically (via flex:1 + space-evenly).
-   All dvw values stay at the 4-day baseline so horizontal zones never shift.
-   Only dvh values and padding grow for 1, 2, and 3 days.
-
-   When 3-digit temps are detected, JS also marks .forecast-list with
-   .large-temps. Those rules override the enhanced sizing back to a safe
-   compact preset using higher-specificity selectors. */
-
-/* 3 forecast days — slight vertical improvement */
-[data-forecast-days="3"] .forecast-icon {
-  width: min(12.5dvh, 7.5dvw);
-  height: min(12.5dvh, 7.5dvw);
-}
-[data-forecast-days="3"] .forecast-day {
-  font-size: min(9.0dvh, 5.8dvw);
-}
-[data-forecast-days="3"] .forecast-range {
-  font-size: min(9.0dvh, 5.8dvw);
-}
-[data-forecast-days="3"] .forecast-row {
-  padding: 2.8dvh 2.8dvw;
-}
-[data-forecast-days="3"] .forecast-list {
-  gap: 1.6dvh;
-}
-
-/* 2 forecast days — moderate vertical increase */
-[data-forecast-days="2"] .forecast-icon {
-  width: min(12.0dvh, 7.5dvw);
-  height: min(12.0dvh, 7.5dvw);
-}
-[data-forecast-days="2"] .forecast-day {
-  font-size: min(9.0dvh, 5.8dvw);
-}
-[data-forecast-days="2"] .forecast-range {
-  font-size: min(9.0dvh, 5.8dvw);
-}
-[data-forecast-days="2"] .forecast-row {
-  padding: 2.8dvh 2.8dvw;
-}
-[data-forecast-days="2"] .forecast-list {
-  gap: 2.0dvh;
-}
-
-/* 1 forecast day — larger vertical increase */
-[data-forecast-days="1"] .forecast-icon {
-  width: min(20.0dvh, 7.5dvw);
-  height: min(20.0dvh, 7.5dvw);
-}
-[data-forecast-days="1"] .forecast-day {
-  font-size: min(15.0dvh, 5.8dvw);
-}
-[data-forecast-days="1"] .forecast-range {
-  font-size: min(15.0dvh, 5.8dvw);
-}
-[data-forecast-days="1"] .forecast-row {
-  padding: 4.5dvh 2.8dvw;
-}
-
-/* --- 3-digit temperature overrides ---
-   When .forecast-list has .large-temps, reset icon, day, and range to
-   conservative sizes that fit "▲ 305K  ▼ 296K" without horizontal overlap.
-   Horizontal dvw caps are reduced; dvh values match 4-day baseline. */
-
-/* 3-day and 2-day large-temps: conservative baseline */
-[data-forecast-days="3"] .forecast-list.large-temps .forecast-icon,
-[data-forecast-days="2"] .forecast-list.large-temps .forecast-icon {
-  width: min(10.0dvh, 6.5dvw);
-  height: min(10.0dvh, 6.5dvw);
-}
-[data-forecast-days="3"] .forecast-list.large-temps .forecast-day,
-[data-forecast-days="2"] .forecast-list.large-temps .forecast-day {
-  font-size: min(9.0dvh, 4.8dvw);
-}
-[data-forecast-days="3"] .forecast-list.large-temps .forecast-range,
-[data-forecast-days="2"] .forecast-list.large-temps .forecast-range {
-  font-size: min(7.8dvh, 4.0dvw);
-}
-[data-forecast-days="2"] .forecast-list.large-temps .forecast-row {
-  padding: 2.8dvh 2.8dvw;
-}
-
-/* 4-day large-temps: day label slightly larger only */
-.forecast-list.large-temps .forecast-day {
-  font-size: min(9.0dvh, 4.8dvw);
-}
-
-/* 1-day large-temps: slightly larger than 2-day large-temps */
-[data-forecast-days="1"] .forecast-list.large-temps .forecast-icon {
-  width: min(13.0dvh, 6.5dvw);
-  height: min(13.0dvh, 6.5dvw);
-}
-[data-forecast-days="1"] .forecast-list.large-temps .forecast-day {
-  font-size: min(12.0dvh, 4.8dvw);
-}
-[data-forecast-days="1"] .forecast-list.large-temps .forecast-range {
-  font-size: min(10.5dvh, 4.0dvw);
-}
-[data-forecast-days="1"] .forecast-list.large-temps .forecast-row {
-  padding: 4.0dvh 2.8dvw;
-}
-
-@media (max-width: 250px) {
-  .mini-weather-shell {
-    font-family: "Dogica", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-  }
-}
-
-/* --- Portrait / vertical orientation ---
-   Placed last so these overrides beat the landscape forecast-day scaling rules.
-   Goal: title + current card + N forecast rows always fit within 100% height
-   without clipping the last day (especially at 4 days). */
 @media (max-aspect-ratio: 1) {
   .mini-weather-shell {
-    /* Top-align so any residual overflow does not eat bottom rows. */
-    justify-content: flex-start;
-    gap: 1.4dvh;
-    padding: 1.6dvh 2.5dvw;
-    overflow: hidden;
+    padding: 1.6dvh 3.6dvw 1.8dvh;
   }
 
-  .mini-weather-title {
-    flex: 0 0 auto;
-    font-size: min(8.8dvh, 9.5dvw);
+  .mw-header {
+    align-items: flex-start;
+    padding-bottom: 1.1dvh;
   }
 
-  .mini-weather-date {
-    flex: 0 0 auto;
-    font-size: min(5.8dvh, 6.8dvw);
-    margin-top: 0.2dvh;
+  .mw-title {
+    font-size: min(5.4dvh, 8.4dvw);
   }
 
-  .mini-weather-layout {
-    grid-template-columns: 1fr;
-    /* Current card sizes to content; forecast list claims remaining height */
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 1.4dvh;
-    flex: 1 1 auto;
-    min-height: 0;
+  .mw-header-date {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2dvh;
+    font-size: max(18px, min(2.5dvh, 4.3dvw));
+    padding-top: 0.2dvh;
+    line-height: 1.3;
   }
 
-  .current-card {
-    min-height: 0;
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    margin: 0 auto;
-    padding: 1.6dvh 3.85dvw 1.2dvh;
-    --temp-base: min(16dvh, 18dvw);
+  .mw-date-line {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15dvh;
   }
 
-  .current-label {
-    font-size: min(6.2dvh, 6.6dvw);
-  }
-
-  .current-icon {
-    width: min(16dvh, 18dvw);
-    height: min(16dvh, 18dvw);
-  }
-
-  .current-range {
-    font-size: min(6.8dvh, 7.2dvw);
-    gap: 1.8dvw;
-  }
-
-  .current-main {
-    gap: 1.21dvw;
-    white-space: normal;
-    flex-wrap: wrap;
+  .mw-hero {
+    padding: 0.4dvh 0 0.4dvh;
+    gap: 1.6dvh;
     justify-content: center;
   }
 
-  .forecast-list {
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    gap: 0.8dvh;
-    min-height: 0;
+  .mw-hero-main {
+    gap: 2.0dvw;
+    flex: 0 0 auto;
   }
 
-  .forecast-row {
-    padding: 0.9dvh 1.98dvw;
-    width: 100%;
-    box-sizing: border-box;
+  .current-temp {
+    --temp-base: min(14.4dvh, 24dvw);
+  }
+
+  .current-icon {
+    /* SVG clouds don't fill the viewBox; size the box so the
+       visible glyph is roughly as tall as the 22°C text. */
+    width: min(26dvh, 40dvw);
+    height: min(26dvh, 40dvw);
+  }
+
+  .mw-hero-left {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 1.0dvw;
+  }
+
+  .mw-hero-right {
+    max-width: 46%;
+    gap: 0.1dvh;
+  }
+
+  .mw-wx {
+    font-size: max(18px, min(2.4dvh, 4.6dvw));
+    margin-top: -4.4dvh;
+  }
+
+  .current-range {
+    font-size: min(3.6dvh, 5.8dvw);
+    gap: 2.2dvw;
+    margin-top: 1.2dvh;
+  }
+
+  .mw-secondary {
+    justify-content: flex-start;
+    gap: 2.2dvw;
+    margin-top: 1.2dvh;
+  }
+
+  .mw-feels {
+    font-size: max(18px, min(2.6dvh, 4.6dvw));
+  }
+
+  .mw-rain {
+    font-size: max(18px, min(3.0dvh, 5.2dvw));
+  }
+
+  .mw-updated {
+    font-size: max(18px, min(2.0dvh, 3.6dvw));
+  }
+
+  .mw-rule-dashed {
+    margin-top: 0.2dvh;
+    margin-bottom: 0.6dvh;
+  }
+
+  .forecast-list {
+    flex: 0 0 auto;
+    padding: 1.2dvh 0 0.2dvh;
+  }
+
+  .forecast-col {
+    justify-content: flex-start;
+    gap: 1.4dvh;
+    padding: 0.6dvh 0.8dvw 0.2dvh;
+  }
+
+  .forecast-day {
+    font-size: min(3.2dvh, 5.6dvw);
   }
 
   .forecast-icon {
-    width: min(7.2dvh, 7.5dvw);
-    height: min(7.2dvh, 7.5dvw);
+    width: min(15dvh, 22dvw);
+    height: min(15dvh, 22dvw);
   }
 
-  .forecast-day,
+  /* Portrait: stack high / low on two lines, hide the slash. */
   .forecast-range {
-    font-size: min(5.8dvh, 5.8dvw);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45dvh;
+    font-size: min(2.9dvh, 5.0dvw);
+    line-height: 1.15;
   }
 
-  .forecast-left,
-  .forecast-range {
-    min-width: 0;
+  .forecast-range .range-sep {
+    display: none;
   }
 
-  /* Fewer days → roomier current card + forecast typography */
-  [data-forecast-days="1"] .current-card,
-  [data-forecast-days="2"] .current-card {
-    padding: 2.0dvh 3.85dvw 1.5dvh;
-    --temp-base: min(20dvh, 20dvw);
-  }
-  [data-forecast-days="1"] .current-icon,
-  [data-forecast-days="2"] .current-icon {
-    width: min(20dvh, 20dvw);
-    height: min(20dvh, 20dvw);
+  .current-range.large-temps {
+    font-size: min(3.4dvh, 5.6dvw);
   }
 
-  [data-forecast-days="3"] .forecast-icon {
-    width: min(8.5dvh, 7.5dvw);
-    height: min(8.5dvh, 7.5dvw);
-  }
-  [data-forecast-days="3"] .forecast-day,
-  [data-forecast-days="3"] .forecast-range {
-    font-size: min(6.5dvh, 5.8dvw);
-  }
-  [data-forecast-days="3"] .forecast-row {
-    padding: 1.1dvh 1.98dvw;
-  }
-  [data-forecast-days="3"] .forecast-list {
-    gap: 0.7dvh;
+  .forecast-list.large-temps .forecast-range,
+  .forecast-range.large-temps {
+    font-size: min(2.4dvh, 4.2dvw);
   }
 
-  [data-forecast-days="2"] .forecast-icon {
-    width: min(10dvh, 7.5dvw);
-    height: min(10dvh, 7.5dvw);
-  }
-  [data-forecast-days="2"] .forecast-day,
-  [data-forecast-days="2"] .forecast-range {
-    font-size: min(7.2dvh, 5.8dvw);
-  }
-  [data-forecast-days="2"] .forecast-row {
-    padding: 1.4dvh 1.98dvw;
-  }
-  [data-forecast-days="2"] .forecast-list {
-    gap: 1.0dvh;
-  }
-
-  [data-forecast-days="1"] .forecast-icon {
-    width: min(14dvh, 7.5dvw);
-    height: min(14dvh, 7.5dvw);
-  }
-  [data-forecast-days="1"] .forecast-day,
-  [data-forecast-days="1"] .forecast-range {
-    font-size: min(9dvh, 5.8dvw);
-  }
-  [data-forecast-days="1"] .forecast-row {
-    padding: 2.0dvh 1.98dvw;
-  }
-
-  /* 4-day portrait: compact rows so all four stay fully visible.
-     Specificity matches/beats the landscape 4-day .forecast-day rules. */
-  [data-forecast-days="4"] .forecast-list {
-    gap: 0.5dvh;
-  }
-  [data-forecast-days="4"] .forecast-row {
-    padding: 0.55dvh 1.6dvw;
-  }
-  [data-forecast-days="4"] .forecast-icon {
-    width: min(6.2dvh, 7.0dvw);
-    height: min(6.2dvh, 7.0dvw);
-  }
-  [data-forecast-days="4"] .forecast-day,
-  [data-forecast-days="4"] .forecast-range,
-  [data-forecast-days="4"]:not(.no-icons) .forecast-list:not(.large-temps) .forecast-day,
-  [data-forecast-days="4"].no-icons .forecast-day,
-  [data-forecast-days="4"] .forecast-list.large-temps .forecast-day,
-  [data-forecast-days="4"] .forecast-list.large-temps .forecast-range {
-    font-size: min(5.2dvh, 5.5dvw);
-  }
-
-  /* Portrait no-icons: day label can grow a bit without icon */
-  [data-forecast-days="4"].no-icons .forecast-day {
-    font-size: min(5.8dvh, 6.2dvw);
-  }
   .no-icons .forecast-day {
-    font-size: min(6.8dvh, 6.8dvw);
-  }
-  [data-forecast-days="3"].no-icons .forecast-day {
-    font-size: min(7.2dvh, 6.8dvw);
-  }
-  [data-forecast-days="2"].no-icons .forecast-day,
-  [data-forecast-days="1"].no-icons .forecast-day {
-    font-size: min(8.5dvh, 6.8dvw);
+    font-size: min(3.8dvh, 6.4dvw);
   }
 
-  /* Portrait large-temps: keep range text compact */
-  [data-forecast-days="3"] .forecast-list.large-temps .forecast-icon,
-  [data-forecast-days="2"] .forecast-list.large-temps .forecast-icon,
-  [data-forecast-days="1"] .forecast-list.large-temps .forecast-icon {
-    width: min(7.0dvh, 6.5dvw);
-    height: min(7.0dvh, 6.5dvw);
+  .no-icons .forecast-range {
+    font-size: min(3.4dvh, 5.8dvw);
   }
-  [data-forecast-days="3"] .forecast-list.large-temps .forecast-day,
-  [data-forecast-days="2"] .forecast-list.large-temps .forecast-day {
-    font-size: min(5.8dvh, 4.8dvw);
+}
+
+/* Very small displays: keep typography compact, do not switch to a
+   pixel font (it cannot render CJK location names). */
+@media (max-width: 250px) {
+  .mw-title {
+    font-size: min(7dvh, 8dvw);
   }
-  [data-forecast-days="3"] .forecast-list.large-temps .forecast-range,
-  [data-forecast-days="2"] .forecast-list.large-temps .forecast-range {
-    font-size: min(5.2dvh, 4.0dvw);
-  }
-  [data-forecast-days="1"] .forecast-list.large-temps .forecast-day {
-    font-size: min(8.0dvh, 4.8dvw);
-  }
-  [data-forecast-days="1"] .forecast-list.large-temps .forecast-range {
-    font-size: min(7.0dvh, 4.0dvw);
+
+  .current-temp {
+    --temp-base: min(22dvh, 28dvw);
   }
 }
